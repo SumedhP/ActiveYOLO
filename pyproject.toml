@@ -6,7 +6,9 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "lightly-train[ultralytics]>=0.13.0",
+    "onnxruntime-gpu>=1.23.2",
     "scikit-learn>=1.8.0",
+    "tensorrt>=10.14.1.48.post1",
     "tqdm>=4.67.1",
     "ultralytics>=8.3.240",
 ]
