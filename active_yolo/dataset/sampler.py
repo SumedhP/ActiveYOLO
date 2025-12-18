@@ -62,10 +62,10 @@ def stratified_split(
 
     return train_set, val_set
 
+
 def random_split(
     labels: List[Label], val_ratio: float
 ) -> Tuple[List[Label], List[Label]]:
-
     shuffled_labels = labels[:]
     random.shuffle(shuffled_labels)
 

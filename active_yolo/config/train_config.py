@@ -14,6 +14,7 @@ class AugmentationConfig:
     mosaic: float
     scale: float
 
+
 @dataclass
 class YOLOTrainConfig:
     model: str  # Model path
