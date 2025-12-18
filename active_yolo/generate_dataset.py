@@ -9,7 +9,7 @@ from label import Label
 from dataset import stratified_split, random_split  # type: ignore[unresolved-import]
 
 
-def create_directory_structure(file_path: str) -> None:
+def _create_directory_structure(file_path: str) -> None:
     dirs = [
         "images",
         "images/train",
@@ -24,7 +24,7 @@ def create_directory_structure(file_path: str) -> None:
         os.makedirs(path, exist_ok=True)
 
 
-def collect_all_labels(label_folder_path: str) -> List[Label]:
+def _collect_all_labels(label_folder_path: str) -> List[Label]:
     labels = []
     label_file_paths = glob.glob(label_folder_path + "/*.txt")
     for label_path in tqdm(label_file_paths, desc="Collecting labels", unit="files"):
@@ -33,7 +33,7 @@ def collect_all_labels(label_folder_path: str) -> List[Label]:
     return labels
 
 
-def copy_files(
+def _copy_files(
     labels: List[Label], split: str, dataset_path: str, images_path: str
 ) -> None:
     for label in tqdm(labels, desc=f"Copying {split} files", unit="files"):
@@ -47,7 +47,7 @@ def copy_files(
         shutil.copy2(os.path.join(images_path, image_filename), dest_image_path)
 
 
-def create_dataset_yaml(dataset_path: str, mapping: Dict[int, str]) -> None:
+def _create_dataset_yaml(dataset_path: str, mapping: Dict[int, str]) -> None:
     yaml_content = f"""path: {dataset_path}
 train: images/train
 val: images/val
@@ -65,7 +65,7 @@ names:
         yaml_file.write(yaml_content)
 
 
-def main():
+def generate_dataset():
     data_config = DataConfig.load_data_config()
     app_config = AppConfig.load_app_config()
 
@@ -75,9 +75,9 @@ def main():
     except FileNotFoundError:
         print(f"No directory exists at {app_config.dataset_path}, continuing")
 
-    create_directory_structure(app_config.dataset_path)
+    _create_directory_structure(app_config.dataset_path)
 
-    labels = collect_all_labels(app_config.labels_path)
+    labels = _collect_all_labels(app_config.labels_path)
 
     print(f"Found {len(labels)} labels in total.")
 
@@ -91,11 +91,11 @@ def main():
         f"Training has {len(train_labels)} labels and validation has {len(val_labels)} labels."
     )
 
-    copy_files(train_labels, "train", app_config.dataset_path, app_config.raw_images_path)
-    copy_files(val_labels, "val", app_config.dataset_path, app_config.raw_images_path)
+    _copy_files(train_labels, "train", app_config.dataset_path, app_config.raw_images_path)
+    _copy_files(val_labels, "val", app_config.dataset_path, app_config.raw_images_path)
 
-    create_dataset_yaml(app_config.dataset_path, data_config.names)
+    _create_dataset_yaml(app_config.dataset_path, data_config.names)
 
 
 if __name__ == "__main__":
-    main()
+    generate_dataset()
