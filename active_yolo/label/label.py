@@ -23,15 +23,16 @@ class Label:
             lines = file.readlines()
             for line in lines:
                 parts = line.strip().split()
-                if len(parts) == 5:
-                    id = int(parts[0])
-                    x_center = float(parts[1])
-                    y_center = float(parts[2])
-                    width = float(parts[3])
-                    height = float(parts[4])
-                    annotations.append(
-                        Annotation(id, x_center, y_center, width, height)
-                    )
+
+                if len(parts) != 5:
+                    raise ValueError(f"Invalid label: {file_path}")
+
+                id = int(parts[0])
+                x_center = float(parts[1])
+                y_center = float(parts[2])
+                width = float(parts[3])
+                height = float(parts[4])
+                annotations.append(Annotation(id, x_center, y_center, width, height))
         return Label(file_path, annotations)
 
     def get_class_ids(self) -> Dict[int, int]:

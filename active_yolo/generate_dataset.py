@@ -20,13 +20,13 @@ def _create_directory_structure(file_path: str) -> None:
     ]
 
     for dir_path in dirs:
-        path = file_path + dir_path
+        path = os.path.join(file_path, dir_path)
         os.makedirs(path, exist_ok=True)
 
 
 def _collect_all_labels(label_folder_path: str) -> List[Label]:
     labels = []
-    label_file_paths = glob.glob(label_folder_path + "/*.txt")
+    label_file_paths = glob.glob(os.path.join(label_folder_path, "*.txt"))
     for label_path in tqdm(label_file_paths, desc="Collecting labels", unit="files"):
         label = Label.parse_label_file(label_path)
         labels.append(label)
@@ -91,7 +91,9 @@ def generate_dataset():
         f"Training has {len(train_labels)} labels and validation has {len(val_labels)} labels."
     )
 
-    _copy_files(train_labels, "train", app_config.dataset_path, app_config.raw_images_path)
+    _copy_files(
+        train_labels, "train", app_config.dataset_path, app_config.raw_images_path
+    )
     _copy_files(val_labels, "val", app_config.dataset_path, app_config.raw_images_path)
 
     _create_dataset_yaml(app_config.dataset_path, data_config.names)
