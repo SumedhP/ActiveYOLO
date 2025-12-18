@@ -20,6 +20,7 @@ def train_model():
         data=app_config.dataset_path,
         resume=yolo_config.resume,
         epochs=yolo_config.epochs,
+        patience=yolo_config.patience,
         batch=yolo_config.batch,
         amp=yolo_config.amp,
         compile=yolo_config.compile,
