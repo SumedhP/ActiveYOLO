@@ -10,6 +10,7 @@ dataset:
 active_learning:
   images_per_iteration: 50
   num_clusters: 10
+  output_file_name: "low_confidence_images.txt"
 
 inference:
   confidence_threshold: 0.25
