@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import List, Tuple
-from ..label.label import Label
+from label import Label
+import random
 
 
 def stratified_split(
@@ -58,5 +59,18 @@ def stratified_split(
 
     val_set = [labels[idx] for idx in val_set_indices]
     train_set = [label for label in labels if label not in val_set]
+
+    return train_set, val_set
+
+def random_split(
+    labels: List[Label], val_ratio: float
+) -> Tuple[List[Label], List[Label]]:
+
+    shuffled_labels = labels[:]
+    random.shuffle(shuffled_labels)
+
+    val_size = int(len(labels) * val_ratio)
+    val_set = shuffled_labels[:val_size]
+    train_set = shuffled_labels[val_size:]
 
     return train_set, val_set
