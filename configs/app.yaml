@@ -1,0 +1,17 @@
+raw_images_path: raw_images/
+labels_path: labels/
+dataset_path: dataset/
+output_path: output/
+
+dataset:
+  val_split: 0.2
+  balance_classes: True
+
+active_learning:
+  images_per_iteration: 50
+  num_clusters: 10
+
+inference:
+  confidence_threshold: 0.25
+  agnostic_nms: True
+  half: False

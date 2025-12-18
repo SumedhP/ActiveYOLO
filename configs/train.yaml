@@ -1,0 +1,34 @@
+yolo:
+  model: yolo11n.pt
+  resume: False
+  amp: False
+  compile: True
+
+  epochs: 300
+  patience: 0
+  batch: 64
+  device: [0, 1]
+  optimizer: 'AdamW'
+
+  augmentation:
+    hsv_h: 0.08 # Hue, don't change hue as it affects colors
+    hsv_s: 0.7 # Saturation
+    hsv_v: 0.5 # Brightness
+    degrees: 30.0
+    flipud: 0.0 # Don't flip upside down
+    fliplr: 0.0 # Don't flip left to right
+    mosaic: 0.0 # Don't tile multiple images together
+    scale: 0.7 # Scale images up and down by up to 70%
+
+ssl:
+  out_dir: 'pretrain_runs'
+  model: 'ultralytics/yolo11n.pt'
+
+  epochs: 100
+  batch: 512
+
+  accelerator: 'gpu'
+  devices: 2
+  overwrite: True
+
+  teacher: 'dinov3/vitb16'
