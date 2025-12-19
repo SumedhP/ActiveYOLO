@@ -212,3 +212,4 @@ dataset/*
 runs/*
 output/*
 models/*
+*.zip
