@@ -684,8 +684,6 @@ class LabelingTool:
             )
 
             if results and results[0].boxes is not None:
-                img_width, img_height = self.current_image.size
-
                 # Remove existing suggestions
                 self.bounding_boxes = [
                     b for b in self.bounding_boxes if not getattr(b, "suggested", False)
@@ -694,8 +692,16 @@ class LabelingTool:
                 boxes = results[0].boxes
                 for i in range(len(boxes.xyxy)):
                     x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy()
-                    conf = boxes.conf[i].cpu().numpy()
                     cls = int(boxes.cls[i].cpu().numpy())
+                    
+                    # TODO: REMOVE LATER WITH FIXED MODEL
+                    if cls == 3: # Red 4 -> Red Unknown
+                        cls = 0
+                    elif cls == 8: # Blue 4 -> Blue Unknown
+                        cls = 4
+                    elif cls > 4:
+                        cls -= 1
+                        
 
                     suggested_box = BoundingBox(
                         int(x1), int(y1), int(x2), int(y2), cls, suggested=True
