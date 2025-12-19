@@ -41,6 +41,7 @@ class LabelingTool:
         self.start_y = 0
         self.current_box: Optional[BoundingBox] = None
         self.selected_box: Optional[BoundingBox] = None
+        self.temp_box: Optional[BoundingBox] = None  # For drawing preview
         self.current_class_id = 0
         
         self.model: Optional[YOLO] = None
@@ -259,20 +260,38 @@ class LabelingTool:
         draw_img = display_img.copy()
         draw = ImageDraw.Draw(draw_img)
         
-        for bbox in self.bounding_boxes:
+        # Draw existing boxes
+        boxes_to_draw = self.bounding_boxes.copy()
+        if self.temp_box:
+            boxes_to_draw.append(self.temp_box)
+        
+        for bbox in boxes_to_draw:
             x1 = int(bbox.x1 * self.scale_factor)
             y1 = int(bbox.y1 * self.scale_factor)
             x2 = int(bbox.x2 * self.scale_factor)
             y2 = int(bbox.y2 * self.scale_factor)
             
-            color = "red" if bbox.suggested else "green"
-            width = 3 if bbox.selected else 2
+            # Handle different box types - use getattr with defaults for missing attributes
+            is_suggested = getattr(bbox, 'suggested', False)
+            is_selected = getattr(bbox, 'selected', False)
+            is_temp = (bbox == self.temp_box)
+            
+            if is_temp:
+                color = "blue"  # Temporary box color
+                width = 1
+            elif is_suggested:
+                color = "red"  # Model suggestion color
+                width = 3 if is_selected else 2
+            else:
+                color = "green"  # Manual annotation color
+                width = 3 if is_selected else 2
             
             draw.rectangle([x1, y1, x2, y2], outline=color, width=width)
             
             # Draw class label
-            class_name = self.data_config.names.get(bbox.class_id, str(bbox.class_id))
-            draw.text((x1, y1 - 15), f"{bbox.class_id}: {class_name}", fill=color)
+            if not is_temp:
+                class_name = self.data_config.names.get(bbox.class_id, str(bbox.class_id))
+                draw.text((x1, y1 - 15), f"{bbox.class_id}: {class_name}", fill=color)
         
         self.display_image = ImageTk.PhotoImage(draw_img)
         
@@ -356,7 +375,10 @@ class LabelingTool:
             
             # Mark all boxes as accepted (non-suggested) since they've been saved
             for bbox in self.bounding_boxes:
-                bbox.suggested = False
+                if hasattr(bbox, 'suggested'):
+                    bbox.suggested = False
+                else:
+                    bbox.suggested = False
             
             # Refresh display to show updated colors
             self._update_display()
@@ -377,7 +399,8 @@ class LabelingTool:
         resize_mode = None
         
         for bbox in self.bounding_boxes:
-            if bbox.selected:
+            # Use getattr to safely check for selected attribute
+            if hasattr(bbox, 'selected') and bbox.selected:
                 # Check if clicking on resize handle of selected box
                 resize_mode = self._get_resize_mode(orig_x, orig_y, bbox)
                 if resize_mode:
@@ -396,10 +419,17 @@ class LabelingTool:
             self.start_x = orig_x
             self.start_y = orig_y
         elif clicked_box:
-            # Select the box
+            # Select the box - add selected attribute if it doesn't exist
             for bbox in self.bounding_boxes:
-                bbox.selected = False
-            clicked_box.selected = True
+                if hasattr(bbox, 'selected'):
+                    bbox.selected = False
+                else:
+                    bbox.selected = False  # Add the attribute
+            
+            if hasattr(clicked_box, 'selected'):
+                clicked_box.selected = True
+            else:
+                clicked_box.selected = True  # Add the attribute
             self.selected_box = clicked_box
         else:
             # Start drawing new box
@@ -407,8 +437,12 @@ class LabelingTool:
             self.start_x = orig_x
             self.start_y = orig_y
             
+            # Clear selections
             for bbox in self.bounding_boxes:
-                bbox.selected = False
+                if hasattr(bbox, 'selected'):
+                    bbox.selected = False
+                else:
+                    bbox.selected = False
             self.selected_box = None
         
         self._update_display()
@@ -455,19 +489,13 @@ class LabelingTool:
             
         elif self.drawing_box:
             # Create temporary box for preview
-            temp_box = BoundingBox(
+            self.temp_box = BoundingBox(
                 min(self.start_x, orig_x),
                 min(self.start_y, orig_y),
                 max(self.start_x, orig_x),
                 max(self.start_y, orig_y),
                 self.current_class_id
             )
-            
-            # Remove old temp box if exists
-            self.bounding_boxes = [b for b in self.bounding_boxes if not hasattr(b, 'temp')]
-            
-            temp_box.temp = True  # Mark as temporary
-            self.bounding_boxes.append(temp_box)
             
             self._update_display()
 
@@ -481,9 +509,7 @@ class LabelingTool:
             return
         
         self.drawing_box = False
-        
-        # Remove temporary box
-        self.bounding_boxes = [b for b in self.bounding_boxes if not hasattr(b, 'temp')]
+        self.temp_box = None  # Clear temporary box
         
         x = self.canvas.canvasx(event.x)
         y = self.canvas.canvasy(event.y)
@@ -509,10 +535,20 @@ class LabelingTool:
         if selection:
             index = selection[0]
             if 0 <= index < len(self.bounding_boxes):
+                # Clear all selections
                 for bbox in self.bounding_boxes:
-                    bbox.selected = False
-                self.bounding_boxes[index].selected = True
-                self.selected_box = self.bounding_boxes[index]
+                    if hasattr(bbox, 'selected'):
+                        bbox.selected = False
+                    else:
+                        bbox.selected = False
+                
+                # Select the chosen box
+                selected_bbox = self.bounding_boxes[index]
+                if hasattr(selected_bbox, 'selected'):
+                    selected_bbox.selected = True
+                else:
+                    selected_bbox.selected = True
+                self.selected_box = selected_bbox
                 self._update_display()
 
     def _on_key_press(self, event) -> None:
@@ -529,7 +565,7 @@ class LabelingTool:
             self.current_class_id = class_id
             
             # Also update selected box if there is one
-            if self.selected_box:
+            if self.selected_box and hasattr(self.selected_box, 'class_id'):
                 self.selected_box.class_id = class_id
                 self._update_display()
 
@@ -539,7 +575,7 @@ class LabelingTool:
             self.class_combobox.current(list(self.data_config.names.keys()).index(number))
             
             # Also update selected box if there is one
-            if self.selected_box:
+            if self.selected_box and hasattr(self.selected_box, 'class_id'):
                 self.selected_box.class_id = number
                 self._update_display()
 
@@ -596,7 +632,7 @@ class LabelingTool:
                 img_width, img_height = self.current_image.size
                 
                 # Remove existing suggestions
-                self.bounding_boxes = [b for b in self.bounding_boxes if not b.suggested]
+                self.bounding_boxes = [b for b in self.bounding_boxes if not getattr(b, 'suggested', False)]
                 
                 boxes = results[0].boxes
                 for i in range(len(boxes.xyxy)):
@@ -608,6 +644,8 @@ class LabelingTool:
                         int(x1), int(y1), int(x2), int(y2),
                         cls, suggested=True
                     )
+                    # Manually set suggested attribute since it may not be in constructor
+                    suggested_box.suggested = True
                     self.bounding_boxes.append(suggested_box)
                 
                 self._update_display()
@@ -651,7 +689,8 @@ class LabelingTool:
         self.bbox_listbox.delete(0, tk.END)
         for i, bbox in enumerate(self.bounding_boxes):
             class_name = self.data_config.names.get(bbox.class_id, str(bbox.class_id))
-            status = " (suggested)" if bbox.suggested else ""
+            is_suggested = getattr(bbox, 'suggested', False)
+            status = " (suggested)" if is_suggested else ""
             self.bbox_listbox.insert(tk.END, f"{i+1}: {class_name}{status}")
 
     def _open_directory(self) -> None:
