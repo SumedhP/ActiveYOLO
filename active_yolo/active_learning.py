@@ -15,7 +15,7 @@ def export_images(image_data_list: List[ImageData], export_file_path: str) -> No
     os.makedirs(os.path.dirname(export_file_path), exist_ok=True)
     with open(export_file_path, "w") as file:
         for image_data in image_data_list:
-            file.write(f"{image_data.image_pattern} {image_data.entropy}\n")
+            file.write(f"{image_data.image_path} {image_data.entropy}\n")
 
 
 def compute_low_confidence_images():
