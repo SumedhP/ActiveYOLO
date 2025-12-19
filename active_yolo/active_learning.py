@@ -1,10 +1,14 @@
-from tqdm import tqdm
 from typing import List
 import os
 import glob
 from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
 from config import AppConfig
-from active_learning import ImageData, compute_entropy, compute_embedding, cluster_images
+from active_learning import (
+    ImageData,
+    compute_entropies_mp,
+    compute_embeddings_mp,
+    cluster_images,
+)
 
 
 def export_images(image_data_list: List[ImageData], export_file_path: str) -> None:
@@ -24,33 +28,27 @@ def compute_low_confidence_images():
     print(len(low_confidence_images))
     print(low_confidence_images[:10])
 
-    model = YOLO(app_config.active_learning.model)
+    model_path = app_config.active_learning.model
     try:
-        exported_model_path = model.export(format="engine", nms=True)
-        model = YOLO(exported_model_path)
+        model = YOLO(model_path)
+        model_path = model.export(format="engine", nms=True)
     except Exception as e:
         print(
             f"Error exporting model to TensorRT: {e}, continuing with the current model"
         )
 
-    # First pass: compute all entropies
-    print("Computing entropies for all images...")
-    entropies = {}
-    for image_path in tqdm(
-        low_confidence_images, desc="Computing entropies", unit="image"
-    ):
-        # for image_path in low_confidence_images:
-        entropy = compute_entropy(model, image_path)
-        entropies[image_path] = entropy
+    cpu_count = os.cpu_count()
+    if cpu_count is not None:
+        num_processes = min(32, cpu_count + 4)
+    else:
+        num_processes = 4
 
-    # Second pass: compute all embeddings
-    print("Computing embeddings for all images...")
-    embeddings = {}
-    for image_path in tqdm(
-        low_confidence_images, desc="Computing embeddings", unit="image"
-    ):
-        embedding = compute_embedding(model, image_path)
-        embeddings[image_path] = embedding
+    entropies = compute_entropies_mp(
+        model_path, low_confidence_images, num_processes=num_processes
+    )
+    embeddings = compute_embeddings_mp(
+        model_path, low_confidence_images, num_processes=num_processes
+    )
 
     # Combine results
     image_data_list: List[ImageData] = []
@@ -69,7 +67,7 @@ def compute_low_confidence_images():
         num_clusters=active_learning_config.num_clusters,
         num_images=active_learning_config.images_per_iteration,
     )
-    
+
     print("Top 10 images post clustering:")
     for data in selected_images[:10]:
         print(f"{data.image_path} {data.entropy}")
