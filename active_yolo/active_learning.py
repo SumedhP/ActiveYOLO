@@ -1,89 +1,10 @@
 from tqdm import tqdm
-from ultralytics.engine.results import Results
 from typing import List
 import os
 import glob
 from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
 from config import AppConfig
-import numpy as np
-from dataclasses import dataclass
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import normalize
-
-
-@dataclass
-class ImageData:
-    image_path: str
-    entropy: float
-    embedding: np.ndarray
-
-
-def compute_entropy(model: YOLO, image_path: str) -> float:
-    results = model.predict(image_path, conf=1e-3, verbose=False)
-
-    actual_result = None
-    for result in results:
-        if isinstance(result, Results):
-            actual_result = result
-            break
-
-    if actual_result is None:
-        print(f"No valid results for image: {image_path}")
-        return 0.0
-
-    entropy = 0.0
-    if actual_result.boxes is None or len(actual_result.boxes) == 0:
-        # Low-priority for images with no detections
-        return entropy
-
-    if actual_result.boxes.conf is None or len(actual_result.boxes.conf) == 0:
-        return entropy
-
-    confidences = actual_result.boxes.conf.numpy()  # type: ignore[possibly-missing-attribute]
-    if len(confidences) == 0:
-        return entropy
-
-    eps = 1e-10
-    p = np.clip(confidences, eps, 1 - eps)
-    # Bernoulli mean entropy
-    entropy = p * -np.log(p) + (1 - p) * -np.log(1 - p)
-    entropy = float(np.mean(entropy))
-    return entropy
-
-
-def compute_embedding(model: YOLO, image_path: str) -> np.ndarray:
-    embedding = model.embed(image_path, verbose=False)[0].numpy()
-    return embedding
-
-
-def cluster_images(
-    image_data: List[ImageData], num_clusters: int, num_images: int
-) -> List[ImageData]:
-    if len(image_data) == 0:
-        return []
-
-    embeddings = np.array([data.embedding for data in image_data])
-    embeddings = normalize(embeddings, axis=1, norm="l2")
-    cluster_labels = KMeans(n_clusters=num_clusters).fit_predict(embeddings)
-
-    selected_images = []
-    for i in range(num_clusters):
-        cluster_indices = np.where(cluster_labels == i)[0]
-        cluster_metrics = [image_data[j] for j in cluster_indices]
-
-        if len(cluster_metrics) > 0:
-            cluster_metrics.sort(key=lambda x: x.entropy, reverse=True)
-            selected_images.append(cluster_metrics[0])
-
-    # If we still need more images, add them based on entropy
-    if len(selected_images) < num_images:
-        remaining_images = [data for data in image_data if data not in selected_images]
-        remaining_images.sort(key=lambda x: x.entropy, reverse=True)
-        selected_images.extend(remaining_images[: num_images - len(selected_images)])
-        
-    selected_images.sort(key=lambda x: x.entropy, reverse=True)
-
-    return selected_images
+from active_learning import ImageData, compute_entropy, compute_embedding, cluster_images
 
 
 def export_images(image_data_list: List[ImageData], export_file_path: str) -> None:
