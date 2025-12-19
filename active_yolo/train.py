@@ -1,3 +1,4 @@
+import os
 from ultralytics import YOLO, settings  # type: ignore[reportPrivateImportUsage]
 from lightly_train import pretrain
 from config import AppConfig, TrainConfig
@@ -16,8 +17,10 @@ def train_model():
     # Load the YOLO model
     model = YOLO(yolo_config.model)
 
+    dataset_yaml_path = os.path.join(app_config.dataset_path, "dataset.yaml")
+
     model.train(
-        data=app_config.dataset_path,
+        data=dataset_yaml_path,
         resume=yolo_config.resume,
         epochs=yolo_config.epochs,
         patience=yolo_config.patience,
@@ -26,6 +29,7 @@ def train_model():
         compile=yolo_config.compile,
         device=yolo_config.device,
         optimizer=yolo_config.optimizer,
+        project="runs",
         **asdict(augmentation),
     )
 
