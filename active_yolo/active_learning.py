@@ -1,6 +1,6 @@
 from tqdm import tqdm
 from ultralytics.engine.results import Results
-from typing import Tuple, List
+from typing import List
 import os
 import glob
 from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
@@ -8,6 +8,7 @@ from config import AppConfig
 import numpy as np
 from dataclasses import dataclass
 from sklearn.cluster import KMeans
+from sklearn.preprocessing import normalize
 
 
 @dataclass
@@ -17,42 +18,42 @@ class ImageData:
     embedding: np.ndarray
 
 
-def compute_entropy_and_embedding(
-    model: YOLO, image_path: str
-) -> Tuple[float, np.ndarray]:
-    results = model.predict(image_path, verbose=False)
+def compute_entropy(model: YOLO, image_path: str) -> float:
+    results = model.predict(image_path, conf=1e-3, verbose=False)
 
-    def compute_entropy(result: Results) -> float:
-        entropy = 0.0
+    actual_result = None
+    for result in results:
+        if isinstance(result, Results):
+            actual_result = result
+            break
 
-        if result.boxes is None or len(result.boxes) == 0:
-            # Low-priority for images with no detections
-            return entropy
+    if actual_result is None:
+        print(f"No valid results for image: {image_path}")
+        return 0.0
 
-        if result.boxes.conf is None or len(result.boxes.conf) == 0:
-            return entropy
-
-        confidences = result.boxes.conf.numpy() # type: ignore[possibly-missing-attribute]
-        if len(confidences) == 0:
-            return entropy
-
-        eps = 1e-10
-        confidences = np.clip(confidences, eps, 1 - eps)
-        probs = confidences / np.sum(confidences)
-        entropy = np.sum(probs * -np.log(probs))
+    entropy = 0.0
+    if actual_result.boxes is None or len(actual_result.boxes) == 0:
+        # Low-priority for images with no detections
         return entropy
 
-    # Filter to only Results objects (not tensors)
-    valid_results = [result for result in results if hasattr(result, "boxes")]
-    if len(valid_results) == 0:
-        entropy = 0.0
-    else:
-        entropy = sum(compute_entropy(result) for result in valid_results) / len(
-            valid_results
-        )
+    if actual_result.boxes.conf is None or len(actual_result.boxes.conf) == 0:
+        return entropy
 
+    confidences = actual_result.boxes.conf.numpy()  # type: ignore[possibly-missing-attribute]
+    if len(confidences) == 0:
+        return entropy
+
+    eps = 1e-10
+    p = np.clip(confidences, eps, 1 - eps)
+    # Bernoulli mean entropy
+    entropy = p * -np.log(p) + (1 - p) * -np.log(1 - p)
+    entropy = float(np.mean(entropy))
+    return entropy
+
+
+def compute_embedding(model: YOLO, image_path: str) -> np.ndarray:
     embedding = model.embed(image_path, verbose=False)[0].numpy()
-    return entropy, embedding
+    return embedding
 
 
 def cluster_images(
@@ -62,9 +63,8 @@ def cluster_images(
         return []
 
     embeddings = np.array([data.embedding for data in image_data])
-    cluster_labels = KMeans(n_clusters=num_clusters, random_state=0).fit_predict(
-        embeddings
-    )
+    embeddings = normalize(embeddings, axis=1, norm="l2")
+    cluster_labels = KMeans(n_clusters=num_clusters).fit_predict(embeddings)
 
     selected_images = []
     for i in range(num_clusters):
@@ -112,12 +112,36 @@ def compute_low_confidence_images():
             f"Error exporting model to TensorRT: {e}, continuing with the current model"
         )
 
-    image_data_list = []
+    # First pass: compute all entropies
+    print("Computing entropies for all images...")
+    entropies = {}
     for image_path in tqdm(
-        low_confidence_images, desc="Computing entropy and embedding", unit="image"
+        low_confidence_images, desc="Computing entropies", unit="image"
     ):
-        entropy, embedding = compute_entropy_and_embedding(model, image_path)
+        # for image_path in low_confidence_images:
+        entropy = compute_entropy(model, image_path)
+        entropies[image_path] = entropy
+
+    # Second pass: compute all embeddings
+    print("Computing embeddings for all images...")
+    embeddings = {}
+    for image_path in tqdm(
+        low_confidence_images, desc="Computing embeddings", unit="image"
+    ):
+        embedding = compute_embedding(model, image_path)
+        embeddings[image_path] = embedding
+
+    # Combine results
+    image_data_list: List[ImageData] = []
+    for image_path in low_confidence_images:
+        entropy = entropies[image_path]
+        embedding = embeddings[image_path]
         image_data_list.append(ImageData(image_path, entropy, embedding))
+
+    image_data_list = sorted(image_data_list, key=lambda x: x.entropy, reverse=True)
+    print("Top 10 images by entropy:")
+    for data in image_data_list[:10]:
+        print(f"{data.image_path}")
 
     selected_images = cluster_images(
         image_data_list,
