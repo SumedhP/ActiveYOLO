@@ -15,7 +15,7 @@ def export_images(image_data_list: List[ImageData], export_file_path: str) -> No
     os.makedirs(os.path.dirname(export_file_path), exist_ok=True)
     with open(export_file_path, "w") as file:
         for image_data in image_data_list:
-            file.write(f"{image_data.image_path} {image_data.entropy}\n")
+            file.write(f"{image_data.image_pattern} {image_data.entropy}\n")
 
 
 def compute_low_confidence_images():
@@ -23,8 +23,8 @@ def compute_low_confidence_images():
     active_learning_config = app_config.active_learning
     print("Loaded app config")
 
-    image_path = os.path.join(app_config.raw_images_path, "*.jpg")
-    low_confidence_images = glob.glob(image_path)
+    image_pattern = os.path.join(app_config.raw_images_path, "*.jpg")
+    low_confidence_images = glob.glob(image_pattern)
     print(len(low_confidence_images))
     print(low_confidence_images[:10])
 
@@ -50,12 +50,11 @@ def compute_low_confidence_images():
         model_path, low_confidence_images, num_processes=num_processes
     )
 
-    # Combine results
     image_data_list: List[ImageData] = []
-    for image_path in low_confidence_images:
-        entropy = entropies[image_path]
-        embedding = embeddings[image_path]
-        image_data_list.append(ImageData(image_path, entropy, embedding))
+    for image_pattern in low_confidence_images:
+        entropy = entropies[image_pattern]
+        embedding = embeddings[image_pattern]
+        image_data_list.append(ImageData(image_pattern, entropy, embedding))
 
     image_data_list = sorted(image_data_list, key=lambda x: x.entropy, reverse=True)
     print("Top 10 images by entropy:")

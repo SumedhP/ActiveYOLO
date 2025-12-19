@@ -1,4 +1,4 @@
-raw_images_path: small_raw_images/
+raw_images_path: raw_images/
 labels_path: labels/
 dataset_path: dataset/
 output_path: output/
