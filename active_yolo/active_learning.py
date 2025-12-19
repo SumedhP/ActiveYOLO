@@ -81,8 +81,6 @@ def cluster_images(
         remaining_images.sort(key=lambda x: x.entropy, reverse=True)
         selected_images.extend(remaining_images[: num_images - len(selected_images)])
 
-    selected_images.sort(key=lambda x: x.entropy, reverse=True)
-
     return selected_images
 
 
@@ -141,13 +139,17 @@ def compute_low_confidence_images():
     image_data_list = sorted(image_data_list, key=lambda x: x.entropy, reverse=True)
     print("Top 10 images by entropy:")
     for data in image_data_list[:10]:
-        print(f"{data.image_path}")
+        print(f"{data.image_path} {data.entropy}")
 
     selected_images = cluster_images(
         image_data_list,
         num_clusters=active_learning_config.num_clusters,
         num_images=active_learning_config.images_per_iteration,
     )
+    
+    print("Top 10 images post clustering:")
+    for data in selected_images[:10]:
+        print(f"{data.image_path} {data.entropy}")
 
     output_file = os.path.join(
         app_config.output_path, active_learning_config.output_file_name

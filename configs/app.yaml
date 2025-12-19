@@ -10,7 +10,7 @@ dataset:
 active_learning:
   model: "models/best.pt"
   images_per_iteration: 50
-  num_clusters: 10
+  num_clusters: 50
   output_file_name: "low_confidence_images.txt"
 
 inference:
