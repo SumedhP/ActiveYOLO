@@ -1,4 +1,4 @@
-raw_images_path: raw_images/
+raw_images_path: small_raw_images/
 labels_path: labels/
 dataset_path: dataset/
 output_path: output/
@@ -8,6 +8,7 @@ dataset:
   balance_classes: True
 
 active_learning:
+  model: "yolo11n.pt"
   images_per_iteration: 50
   num_clusters: 10
   output_file_name: "low_confidence_images.txt"
