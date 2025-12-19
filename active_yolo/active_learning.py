@@ -1,3 +1,4 @@
+from tqdm import tqdm
 from ultralytics.engine.results import Results
 from typing import Tuple, List
 import os
@@ -6,7 +7,9 @@ from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
 from config import AppConfig
 import numpy as np
 from dataclasses import dataclass
+print("Importing KMeans from sklearn.cluster")
 from sklearn.cluster import KMeans
+print("Imported KMeans from sklearn.cluster")
 
 
 @dataclass
@@ -22,6 +25,9 @@ def compute_entropy_and_embedding(
     results = model.predict(image_path)
 
     def compute_entropy(result: Results) -> float:
+        print("=" * 80)
+        print(result)
+        print("=" * 80)
         entropy = 0.0
 
         if result.probs is None:
@@ -70,11 +76,20 @@ def cluster_images(
         remaining_images.sort(key=lambda x: x.entropy, reverse=True)
         selected_images.extend(remaining_images[: num_images - len(selected_images)])
 
+    selected_images.sort(key=lambda x: x.entropy, reverse=True)
+
     return selected_images
 
+def export_images(image_data_list: List[ImageData], export_file_path: str) -> None:
+    os.makedirs(os.path.dirname(export_file_path), exist_ok=True)
+    with open(export_file_path, "w") as file:
+        for image_data in image_data_list:
+            file.write(f"{image_data.image_path} {image_data.entropy}\n")
 
 def compute_low_confidence_images():
     app_config = AppConfig.load_app_config()
+    active_learning_config = app_config.active_learning
+    print("Loaded app config")
 
     image_path = os.path.join(app_config.raw_images_path, "*.jpg")
     low_confidence_images = glob.glob(image_path)
@@ -82,8 +97,21 @@ def compute_low_confidence_images():
     print(low_confidence_images[:10])
 
     model = YOLO(app_config.active_learning.model)
-    model = model.export(format="engine", nms=True)
-
+    try:
+        exported_model_path = model.export(format="engine", nms=True)
+        model = YOLO(exported_model_path)
+    except Exception as e:
+        print(f"Error exporting model to TensorRT: {e}, continuing with the current model")
+    
+    image_data_list = []
+    for image_path in tqdm(low_confidence_images, desc="Computing entropy and embedding", unit="image"):
+        entropy, embedding = compute_entropy_and_embedding(model, image_path)
+        image_data_list.append(ImageData(image_path, entropy, embedding))
+    
+    selected_images = cluster_images(image_data_list, num_clusters=active_learning_config.num_clusters, num_images=active_learning_config.images_per_iteration)
+    
+    output_file = os.path.join(app_config.output_path, active_learning_config.output_file_name)
+    export_images(selected_images, output_file)
 
 if __name__ == "__main__":
     compute_low_confidence_images()
