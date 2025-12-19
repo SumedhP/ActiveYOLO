@@ -10,6 +10,7 @@ class DatasetConfig:
 
 @dataclass
 class ActiveLearningConfig:
+    model: str  # Model to use for active learning
     images_per_iteration: int  # Number of images to send to human
     num_clusters: int  # For K-means clustering of embeddings
     output_file_name: str
