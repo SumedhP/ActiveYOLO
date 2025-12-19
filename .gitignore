@@ -213,3 +213,4 @@ runs/*
 output/*
 models/*
 *.zip
+*.pt
