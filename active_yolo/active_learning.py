@@ -80,6 +80,8 @@ def cluster_images(
         remaining_images = [data for data in image_data if data not in selected_images]
         remaining_images.sort(key=lambda x: x.entropy, reverse=True)
         selected_images.extend(remaining_images[: num_images - len(selected_images)])
+        
+    selected_images.sort(key=lambda x: x.entropy, reverse=True)
 
     return selected_images
 
