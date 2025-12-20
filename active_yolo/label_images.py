@@ -355,7 +355,7 @@ class LabelingTool:
         self._update_bbox_list()
 
     def _load_existing_labels(self) -> None:
-        if not self.current_image_path:
+        if not self.current_image_path or not self.current_image:
             return
 
         label_filename = os.path.basename(self.current_image_path).replace(
