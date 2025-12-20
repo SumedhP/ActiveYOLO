@@ -24,9 +24,26 @@ def compute_low_confidence_images():
     print("Loaded app config")
 
     image_pattern = os.path.join(app_config.raw_images_path, "*.jpg")
-    low_confidence_images = glob.glob(image_pattern)
-    print(len(low_confidence_images))
-    print(low_confidence_images[:10])
+    all_images = glob.glob(image_pattern)
+    
+    # Filter out images that already have labels
+    low_confidence_images = []
+    for image_path in all_images:
+        # Get corresponding label filename
+        image_filename = os.path.basename(image_path)
+        label_filename = image_filename.replace(".jpg", ".txt")
+        label_path = os.path.join(app_config.labels_path, label_filename)
+        
+        # Only include images without existing labels
+        if not os.path.exists(label_path):
+            low_confidence_images.append(image_path)
+    
+    print(f"Total images: {len(all_images)}")
+    print(f"Unlabeled images: {len(low_confidence_images)}")
+
+    if not low_confidence_images:
+        print("No unlabeled images found. All images have been labeled!")
+        return
 
     model_path = app_config.active_learning.model
     try:
