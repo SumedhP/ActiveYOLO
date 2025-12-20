@@ -27,7 +27,7 @@ def compute_entropy(model: YOLO, image_path: str) -> float:
     if actual_result.boxes.conf is None or len(actual_result.boxes.conf) == 0:
         return entropy
 
-    confidences = actual_result.boxes.conf.numpy()  # type: ignore[possibly-missing-attribute]
+    confidences = actual_result.boxes.conf.cpu().numpy()  # type: ignore[possibly-missing-attribute]
     if len(confidences) == 0:
         return entropy
 

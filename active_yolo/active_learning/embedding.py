@@ -6,7 +6,7 @@ from tqdm.contrib.concurrent import process_map
 
 
 def compute_embedding(model: YOLO, image_path: str) -> np.ndarray:
-    return model.embed(image_path, verbose=False)[0].numpy()
+    return model.embed(image_path, verbose=False)[0].cpu().numpy()
 
 
 def _compute_embedding_mp_worker(
