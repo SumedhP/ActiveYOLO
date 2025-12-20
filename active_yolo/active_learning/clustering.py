@@ -1,8 +1,7 @@
 import numpy as np
-from typing import List, Set
+from typing import List
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
-import numpy as np
 from dataclasses import dataclass
 
 
