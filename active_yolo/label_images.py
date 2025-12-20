@@ -33,6 +33,7 @@ class LabelingTool:
         self.active_learning_mode = False
         self.scale_factor = 1.0
         self.zoom_level = 1.0
+        self.user_has_zoomed = False  # Track if user has manually adjusted zoom
 
         self.drawing_box = False
         self.resizing_box = False
@@ -200,6 +201,7 @@ class LabelingTool:
         self.canvas.bind("<MouseWheel>", self._on_mouse_wheel)
         self.canvas.bind("<Button-4>", self._on_mouse_wheel)  # Linux
         self.canvas.bind("<Button-5>", self._on_mouse_wheel)  # Linux
+        self.canvas.bind("<Configure>", self._on_canvas_configure)
 
         # Listbox bindings
         self.bbox_listbox.bind("<<ListboxSelect>>", self._on_bbox_select)
@@ -261,6 +263,11 @@ class LabelingTool:
 
         try:
             self.current_image = Image.open(self.current_image_path)
+            
+            # Reset zoom to fit unless user has manually adjusted it
+            if not self.user_has_zoomed:
+                self.zoom_level = 1.0
+            
             self._load_existing_labels()
             self._update_display()
             self._update_image_info()
@@ -275,14 +282,21 @@ class LabelingTool:
         canvas_width = self.canvas.winfo_width()
         canvas_height = self.canvas.winfo_height()
 
+        # Wait for canvas to be properly initialized
         if canvas_width <= 1 or canvas_height <= 1:
-            self.root.after(100, self._update_display)
+            self.root.after(50, self._update_display)
             return
 
         img_width, img_height = self.current_image.size
         scale_x = canvas_width / img_width
         scale_y = canvas_height / img_height
-        base_scale = min(scale_x, scale_y, 1.0)
+        
+        # If user hasn't manually zoomed and zoom_level is 1.0, allow scaling up to fit canvas
+        if not self.user_has_zoomed and self.zoom_level == 1.0:
+            base_scale = min(scale_x, scale_y)  # Allow scaling up to fit
+        else:
+            base_scale = min(scale_x, scale_y, 1.0)  # Limit to original size for manual zoom
+        
         self.scale_factor = base_scale * self.zoom_level
 
         display_width = int(img_width * self.scale_factor)
@@ -695,13 +709,20 @@ class LabelingTool:
                     cls = int(boxes.cls[i].cpu().numpy())
                     
                     # TODO: REMOVE LATER WITH FIXED MODEL
-                    if cls == 3: # Red 4 -> Red Unknown
-                        cls = 0
-                    elif cls == 8: # Blue 4 -> Blue Unknown
-                        cls = 4
-                    elif cls > 4:
-                        cls -= 1
-                        
+                    cls_mapping = {
+                        0: 0,
+                        1: 1,
+                        2: 2,
+                        3: 0,
+                        4: 3,
+                        5: 4,
+                        6: 5,
+                        7: 6,
+                        8: 4,
+                        9: 7
+                    }
+                    cls = cls_mapping[cls]
+    
 
                     suggested_box = BoundingBox(
                         int(x1), int(y1), int(x2), int(y2), cls, suggested=True
@@ -723,16 +744,26 @@ class LabelingTool:
         else:  # Zoom out
             self._zoom_out()
 
+    def _on_canvas_configure(self, event) -> None:
+        """Called when canvas size changes (window resize)"""
+        # Only update if we have an image and the event is for the canvas widget
+        if self.current_image and event.widget == self.canvas:
+            # Use after_idle to avoid multiple rapid calls during window resize
+            self.root.after_idle(self._update_display)
+
     def _zoom_in(self) -> None:
         self.zoom_level = min(self.zoom_level * 1.2, 5.0)
+        self.user_has_zoomed = True
         self._update_display()
 
     def _zoom_out(self) -> None:
         self.zoom_level = max(self.zoom_level / 1.2, 0.1)
+        self.user_has_zoomed = True
         self._update_display()
 
     def _zoom_fit(self) -> None:
         self.zoom_level = 1.0
+        self.user_has_zoomed = False  # Reset user zoom flag
         self._update_display()
 
     def _update_image_counter(self) -> None:

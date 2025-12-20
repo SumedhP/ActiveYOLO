@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Counter
 import os
 import shutil
 import glob
@@ -95,6 +95,21 @@ def generate_dataset():
         train_labels, "train", app_config.dataset_path, app_config.raw_images_path
     )
     _copy_files(val_labels, "val", app_config.dataset_path, app_config.raw_images_path)
+    
+    def get_class_distribution(labels: List[Label]) -> None:
+        count = Counter() # type: ignore[call-non-callable]
+        for label in labels:
+            ids = label.get_class_ids()
+            count.update(ids)
+        
+        print("Class distribution:")
+        print(count)
+
+    print("Training set class distribution:")
+    get_class_distribution(train_labels)
+    
+    print("Validation set class distribution:")
+    get_class_distribution(val_labels)
 
     _create_dataset_yaml(app_config.dataset_path, data_config.names)
 
