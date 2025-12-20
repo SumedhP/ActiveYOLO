@@ -47,15 +47,6 @@ def compute_low_confidence_images():
         return
 
     model_path = app_config.active_learning.model
-    try:
-        model = YOLO(model_path)
-        model_path = model.export(format="engine", nms=True)
-        del model
-        sleep(5)  # Time to cleanup nvidia resources
-    except Exception as e:
-        print(
-            f"Error exporting model to TensorRT: {e}, continuing with the current model"
-        )
 
     cpu_count = os.cpu_count()
     if cpu_count is not None:
