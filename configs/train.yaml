@@ -12,9 +12,9 @@ yolo:
 
   augmentation:
     hsv_h: 0.08 # Hue, don't change hue as it affects colors
-    hsv_s: 0.7 # Saturation
+    hsv_s: 0.5 # Saturation
     hsv_v: 0.5 # Brightness
-    degrees: 30.0
+    degrees: 20.0
     flipud: 0.0 # Don't flip upside down
     fliplr: 0.0 # Don't flip left to right
     mosaic: 0.0 # Don't tile multiple images together
