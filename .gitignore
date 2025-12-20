@@ -209,7 +209,7 @@ __marimo__/
 # Project specific ignores
 *raw_images/*
 dataset/*
-runs/*
+*runs/*
 output/*
 models/*
 labels/*.txt
