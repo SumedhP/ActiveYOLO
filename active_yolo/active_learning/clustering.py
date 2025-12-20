@@ -22,29 +22,38 @@ def cluster_images(
     if len(image_data) == 0:
         return []
 
+    if num_images >= len(image_data):
+        sorted_data = sorted(image_data, key=lambda x: x.entropy, reverse=True)
+        return sorted_data
+
     num_clusters = min(num_clusters, len(image_data))
 
     embeddings = np.array([data.embedding for data in image_data])
     embeddings = normalize(embeddings, axis=1, norm="l2")
     cluster_labels = KMeans(n_clusters=num_clusters).fit_predict(embeddings)
 
-    selected_images: Set[ImageData] = set()
-    for i in range(num_clusters):
-        cluster_indices = np.where(cluster_labels == i)[0]
-        cluster_metrics = [image_data[j] for j in cluster_indices]
+    selected_images = []
 
-        if len(cluster_metrics) > 0:
-            cluster_metrics.sort(key=lambda x: x.entropy, reverse=True)
-            selected_images.add(cluster_metrics[0])
+    # Sort each cluster group based on entropy
+    cluster_images = {}
+    for idx, label in enumerate(cluster_labels):
+        if label not in cluster_images:
+            cluster_images[label] = []
+        cluster_images[label].append(image_data[idx])
 
-    # If we still need more images, add them based on entropy
-    if len(selected_images) < num_images:
-        remaining_images = [data for data in image_data if data not in selected_images]
-        remaining_images.sort(key=lambda x: x.entropy, reverse=True)
-        for i in range(num_images - len(selected_images)):
-            selected_images.add(remaining_images[i])
+    for label in cluster_images:
+        cluster_images[label].sort(key=lambda x: x.entropy, reverse=True)
 
-    output = list(selected_images)
-    output.sort(key=lambda x: x.entropy, reverse=True)
+    current_cluster = 0
+    while len(selected_images) < num_images:
+        cluster_group = cluster_images[current_cluster]
 
-    return output
+        # Remove first image in cluster
+        if cluster_group:
+            selected_images.append(cluster_group.pop(0))
+
+        current_cluster = (current_cluster + 1) % num_clusters
+
+    selected_images.sort(key=lambda x: x.entropy, reverse=True)
+
+    return selected_images
