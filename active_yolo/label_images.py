@@ -263,11 +263,11 @@ class LabelingTool:
 
         try:
             self.current_image = Image.open(self.current_image_path)
-            
+
             # Reset zoom to fit unless user has manually adjusted it
             if not self.user_has_zoomed:
                 self.zoom_level = 1.0
-            
+
             self._load_existing_labels()
             self._update_display()
             self._update_image_info()
@@ -290,13 +290,15 @@ class LabelingTool:
         img_width, img_height = self.current_image.size
         scale_x = canvas_width / img_width
         scale_y = canvas_height / img_height
-        
+
         # If user hasn't manually zoomed and zoom_level is 1.0, allow scaling up to fit canvas
         if not self.user_has_zoomed and self.zoom_level == 1.0:
             base_scale = min(scale_x, scale_y)  # Allow scaling up to fit
         else:
-            base_scale = min(scale_x, scale_y, 1.0)  # Limit to original size for manual zoom
-        
+            base_scale = min(
+                scale_x, scale_y, 1.0
+            )  # Limit to original size for manual zoom
+
         self.scale_factor = base_scale * self.zoom_level
 
         display_width = int(img_width * self.scale_factor)

@@ -26,7 +26,7 @@ def compute_low_confidence_images():
 
     image_pattern = os.path.join(app_config.raw_images_path, "*.jpg")
     all_images = glob.glob(image_pattern)
-    
+
     # Filter out images that already have labels
     low_confidence_images = []
     for image_path in all_images:
@@ -34,11 +34,11 @@ def compute_low_confidence_images():
         image_filename = os.path.basename(image_path)
         label_filename = image_filename.replace(".jpg", ".txt")
         label_path = os.path.join(app_config.labels_path, label_filename)
-        
+
         # Only include images without existing labels
         if not os.path.exists(label_path):
             low_confidence_images.append(image_path)
-    
+
     print(f"Total images: {len(all_images)}")
     print(f"Unlabeled images: {len(low_confidence_images)}")
 
@@ -51,7 +51,7 @@ def compute_low_confidence_images():
         model = YOLO(model_path)
         model_path = model.export(format="engine", nms=True)
         del model
-        sleep(5) # Time to cleanup nvidia resources
+        sleep(5)  # Time to cleanup nvidia resources
     except Exception as e:
         print(
             f"Error exporting model to TensorRT: {e}, continuing with the current model"
