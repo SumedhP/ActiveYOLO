@@ -707,22 +707,6 @@ class LabelingTool:
                 for i in range(len(boxes.xyxy)):
                     x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy()
                     cls = int(boxes.cls[i].cpu().numpy())
-                    
-                    # TODO: REMOVE LATER WITH FIXED MODEL
-                    cls_mapping = {
-                        0: 0,
-                        1: 1,
-                        2: 2,
-                        3: 0,
-                        4: 3,
-                        5: 4,
-                        6: 5,
-                        7: 6,
-                        8: 4,
-                        9: 7
-                    }
-                    cls = cls_mapping[cls]
-    
 
                     suggested_box = BoundingBox(
                         int(x1), int(y1), int(x2), int(y2), cls, suggested=True
