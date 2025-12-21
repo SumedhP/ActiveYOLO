@@ -104,7 +104,7 @@ def generate_dataset():
 
         print("Class distribution:")
         for class_id, class_count in sorted(count.items()):
-            print(class_id, class_count)
+            print(f"{class_id}:  {class_count}")
 
     print("Training set class distribution:")
     get_class_distribution(train_labels)
