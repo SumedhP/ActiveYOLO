@@ -31,6 +31,7 @@ class LabelingTool:
         self.current_index = 0
         self.bounding_boxes: List[BoundingBox] = []
         self.active_learning_mode = False
+        self.invert_order = False
         self.scale_factor = 1.0
         self.zoom_level = 1.0
         self.user_has_zoomed = False  # Track if user has manually adjusted zoom
@@ -94,6 +95,15 @@ class LabelingTool:
             text="Use Active Learning List",
             variable=self.active_learning_var,
             command=self._toggle_active_learning_list,
+        ).pack(side=tk.LEFT, padx=5)
+
+        # Invert order checkbox
+        self.invert_order_var = tk.BooleanVar()
+        ttk.Checkbutton(
+            toolbar,
+            text="Invert Order",
+            variable=self.invert_order_var,
+            command=self._toggle_invert_order,
         ).pack(side=tk.LEFT, padx=5)
 
         ttk.Button(
@@ -263,12 +273,23 @@ class LabelingTool:
                         self.entropy_values[image_path] = entropy_value
                     elif parts:
                         self.image_files.append(parts[0])
+        
+        # Reverse the list if invert order is enabled
+        if self.invert_order:
+            self.image_files.reverse()
 
     def _toggle_active_learning_list(self) -> None:
         self.active_learning_mode = self.active_learning_var.get()
         self._load_images()
         if self.image_files:
             self._load_current_image()
+
+    def _toggle_invert_order(self) -> None:
+        self.invert_order = self.invert_order_var.get()
+        if self.active_learning_mode:
+            self._load_images()
+            if self.image_files:
+                self._load_current_image()
 
     def _jump_to_unlabeled(self) -> None:
         """Jump to the next unlabeled image"""
