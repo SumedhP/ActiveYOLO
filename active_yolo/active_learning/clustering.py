@@ -1,5 +1,6 @@
 import numpy as np
 from typing import List
+from functools import cmp_to_key
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
 from dataclasses import dataclass
@@ -13,11 +14,16 @@ class ImageData:
 
     def __hash__(self):
         return hash(self.image_path)
-    
+
     def __lt__(self, other):
         # If entropy is the same, compare by image_path to ensure consistent ordering
         if self.entropy == other.entropy:
-            return self.image_path > other.image_path # Higher entropy first, so reverse order
+            return self.image_path > other.image_path
+        return self.entropy < other.entropy
+
+    def lt_with_tolerance(self, other, tol=1e-6):
+        if abs(self.entropy - other.entropy) < tol:
+            return self.image_path > other.image_path
         return self.entropy < other.entropy
 
 
@@ -28,7 +34,16 @@ def cluster_images(
         return []
 
     if num_images >= len(image_data):
-        return sorted(image_data, reverse=True)
+        entropy_tol = 0.01
+        return sorted(
+            image_data,
+            key=cmp_to_key(
+                lambda a, b: -1
+                if a.lt_with_tolerance(b, tol=entropy_tol)
+                else (1 if b.lt_with_tolerance(a, tol=entropy_tol) else 0)
+            ),
+            reverse=True,
+        )
 
     num_clusters = min(num_clusters, len(image_data))
 

@@ -6,9 +6,9 @@ import random
 
 BACKGROUND_ID = -1
 
+
 def stratified_split(
-    labels: List[Label],
-    val_ratio: float
+    labels: List[Label], val_ratio: float
 ) -> Tuple[List[Label], List[Label]]:
     # 1. Total class counts
     total_class_counts: Dict[int, int] = defaultdict(int)
@@ -33,8 +33,8 @@ def stratified_split(
     def label_priority(label: Label) -> float:
         class_ids = label.get_class_ids()
         if not class_ids:
-            return float('inf')  # Background image lowest priority
-        
+            return float("inf")  # Background image lowest priority
+
         score = 0.0
         for class_id, count in class_ids.items():
             # rarer classes get higher priority
@@ -49,7 +49,7 @@ def stratified_split(
     # 5. Greedy assignment
     for label in sorted_labels:
         class_ids = label.get_class_ids()
-        
+
         if not class_ids:
             label_class_counts = {BACKGROUND_ID: 1}
         else:
@@ -67,7 +67,7 @@ def stratified_split(
                 current_val_counts[class_id] += count
         else:
             train_labels.append(label)
-            
+
     print("Final validation class distribution:")
     for class_id, count in sorted(current_val_counts.items()):
         print(f"{class_id}: {count}")

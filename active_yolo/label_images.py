@@ -295,9 +295,9 @@ class LabelingTool:
         """Jump to the next unlabeled image"""
         if not self.image_files:
             return
-        
+
         self._save_labels()  # Auto-save current image
-        
+
         # Search forward from current position
         start_index = self.current_index + 1
         for i in range(start_index, len(self.image_files)):
@@ -306,7 +306,7 @@ class LabelingTool:
                 self._load_current_image()
                 self._update_image_counter()
                 return
-        
+
         # If not found forward, search from beginning
         for i in range(0, start_index):
             if not self._has_labels(self.image_files[i]):
@@ -314,7 +314,7 @@ class LabelingTool:
                 self._load_current_image()
                 self._update_image_counter()
                 return
-        
+
         # No unlabeled images found
         messagebox.showinfo("Info", "All images have been labeled!")
 
@@ -825,9 +825,12 @@ class LabelingTool:
         if self.current_image_path:
             filename = os.path.basename(self.current_image_path)
             self.image_name_label.config(text=filename)
-            
+
             # Update entropy display in toolbar
-            if self.active_learning_mode and self.current_image_path in self.entropy_values:
+            if (
+                self.active_learning_mode
+                and self.current_image_path in self.entropy_values
+            ):
                 entropy = self.entropy_values[self.current_image_path]
                 self.current_entropy = entropy
                 self.entropy_label.config(text=f"Entropy: {entropy:.4f}")

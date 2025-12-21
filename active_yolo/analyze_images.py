@@ -81,8 +81,10 @@ def compute_low_confidence_images():
     print("Top 10 images post clustering:")
     for data in selected_images[:10]:
         print(f"{data.image_path} {data.entropy}")
-        
-    print(f"Number of images with Entropy of 1: {sum(1 for data in selected_images if data.entropy == 1.0)}")
+
+    print(
+        f"Number of images with Entropy of 1: {sum(1 for data in selected_images if data.entropy == 1.0)}"
+    )
 
     output_file = os.path.join(
         app_config.output_path, active_learning_config.output_file_name
