@@ -13,6 +13,12 @@ class ImageData:
 
     def __hash__(self):
         return hash(self.image_path)
+    
+    def __lt__(self, other):
+        # If entropy is the same, compare by image_path to ensure consistent ordering
+        if self.entropy == other.entropy:
+            return self.image_path > other.image_path # Higher entropy first, so reverse order
+        return self.entropy < other.entropy
 
 
 def cluster_images(
@@ -22,8 +28,7 @@ def cluster_images(
         return []
 
     if num_images >= len(image_data):
-        sorted_data = sorted(image_data, key=lambda x: x.entropy, reverse=True)
-        return sorted_data
+        return sorted(image_data, reverse=True)
 
     num_clusters = min(num_clusters, len(image_data))
 
@@ -41,7 +46,7 @@ def cluster_images(
         cluster_images[label].append(image_data[idx])
 
     for label in cluster_images:
-        cluster_images[label].sort(key=lambda x: x.entropy, reverse=True)
+        cluster_images[label].sort(reverse=True)
 
     current_cluster = 0
     while len(selected_images) < num_images:
@@ -53,6 +58,4 @@ def cluster_images(
 
         current_cluster = (current_cluster + 1) % num_clusters
 
-    selected_images.sort(key=lambda x: x.entropy, reverse=True)
-
-    return selected_images
+    return sorted(selected_images, reverse=True)
