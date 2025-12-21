@@ -34,6 +34,8 @@ class LabelingTool:
         self.scale_factor = 1.0
         self.zoom_level = 1.0
         self.user_has_zoomed = False  # Track if user has manually adjusted zoom
+        self.entropy_values = {}  # Store entropy values for active learning images
+        self.current_entropy = None  # Current image's entropy value
 
         self.drawing_box = False
         self.resizing_box = False
@@ -95,11 +97,18 @@ class LabelingTool:
         ).pack(side=tk.LEFT, padx=5)
 
         ttk.Button(
+            toolbar, text="Jump to Unlabeled", command=self._jump_to_unlabeled
+        ).pack(side=tk.LEFT, padx=5)
+
+        ttk.Button(
             toolbar, text="Load Model Suggestions", command=self._load_model_suggestions
         ).pack(side=tk.LEFT, padx=5)
-        ttk.Button(
-            toolbar, text="Mark as Background", command=self._mark_background
-        ).pack(side=tk.LEFT, padx=5)
+
+        ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
+
+        # Entropy display (for active learning mode)
+        self.entropy_label = ttk.Label(toolbar, text="", foreground="blue")
+        self.entropy_label.pack(side=tk.LEFT, padx=5)
 
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
@@ -242,11 +251,17 @@ class LabelingTool:
         )
 
         self.image_files = []
+        self.entropy_values = {}
         if os.path.exists(output_file):
             with open(output_file, "r") as f:
                 for line in f:
                     parts = line.strip().split()
-                    if parts:
+                    if len(parts) >= 2:
+                        image_path = parts[0]
+                        entropy_value = float(parts[1])
+                        self.image_files.append(image_path)
+                        self.entropy_values[image_path] = entropy_value
+                    elif parts:
                         self.image_files.append(parts[0])
 
     def _toggle_active_learning_list(self) -> None:
@@ -254,6 +269,39 @@ class LabelingTool:
         self._load_images()
         if self.image_files:
             self._load_current_image()
+
+    def _jump_to_unlabeled(self) -> None:
+        """Jump to the next unlabeled image"""
+        if not self.image_files:
+            return
+        
+        self._save_labels()  # Auto-save current image
+        
+        # Search forward from current position
+        start_index = self.current_index + 1
+        for i in range(start_index, len(self.image_files)):
+            if not self._has_labels(self.image_files[i]):
+                self.current_index = i
+                self._load_current_image()
+                self._update_image_counter()
+                return
+        
+        # If not found forward, search from beginning
+        for i in range(0, start_index):
+            if not self._has_labels(self.image_files[i]):
+                self.current_index = i
+                self._load_current_image()
+                self._update_image_counter()
+                return
+        
+        # No unlabeled images found
+        messagebox.showinfo("Info", "All images have been labeled!")
+
+    def _has_labels(self, image_path: str) -> bool:
+        """Check if an image has an existing label file"""
+        label_filename = os.path.basename(image_path).replace(".jpg", ".txt")
+        label_path = os.path.join(self.app_config.labels_path, label_filename)
+        return os.path.exists(label_path)
 
     def _load_current_image(self) -> None:
         if not self.image_files or self.current_index >= len(self.image_files):
@@ -673,11 +721,6 @@ class LabelingTool:
         box.class_id = class_id
         self._update_display()
 
-    def _mark_background(self) -> None:
-        self.bounding_boxes = []
-        self._save_labels()
-        self._update_display()
-
     def _load_model_suggestions(self) -> None:
         if not self.current_image_path:
             return
@@ -761,8 +804,19 @@ class LabelingTool:
         if self.current_image_path:
             filename = os.path.basename(self.current_image_path)
             self.image_name_label.config(text=filename)
+            
+            # Update entropy display in toolbar
+            if self.active_learning_mode and self.current_image_path in self.entropy_values:
+                entropy = self.entropy_values[self.current_image_path]
+                self.current_entropy = entropy
+                self.entropy_label.config(text=f"Entropy: {entropy:.4f}")
+            else:
+                self.current_entropy = None
+                self.entropy_label.config(text="")
         else:
             self.image_name_label.config(text="")
+            self.current_entropy = None
+            self.entropy_label.config(text="")
 
     def _update_bbox_list(self) -> None:
         self.bbox_listbox.delete(0, tk.END)
