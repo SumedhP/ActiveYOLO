@@ -1,9 +1,18 @@
 import os
 import zipfile
 from tqdm import tqdm
+import argparse
 
 if __name__ == "__main__":
-    input_directory = "raw_images"
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--zip",
+        help="Zip the raw images directory",
+        default="dataset",
+    )
+    args = parser.parse_args()
+    
+    input_directory = args.zip
     output_zip_file = input_directory + ".zip"
 
     files = []
