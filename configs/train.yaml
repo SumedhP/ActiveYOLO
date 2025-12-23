@@ -5,7 +5,7 @@ yolo:
   compile: True
 
   epochs: 300
-  patience: 0
+  patience: 100
   batch: 64
   device: [0, 1]
   optimizer: 'AdamW'
