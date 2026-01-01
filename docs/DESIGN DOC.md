@@ -116,6 +116,7 @@ This is the primary user-facing component and will be implemented as a Tkinter-b
 - Include a button to load model-predicted bounding boxes.
 - Display suggested boxes in a distinct color.
 - Allow users to modify, accept, or delete suggested boxes.
+- Toggle to have this load in on images that don't have any existing labels.
 
 ### Additional UI Features
 

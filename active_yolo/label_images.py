@@ -32,6 +32,7 @@ class LabelingTool:
         self.bounding_boxes: List[BoundingBox] = []
         self.active_learning_mode = False
         self.invert_order = False
+        self.auto_load_predictions = False
         self.scale_factor = 1.0
         self.zoom_level = 1.0
         self.user_has_zoomed = False  # Track if user has manually adjusted zoom
@@ -112,6 +113,15 @@ class LabelingTool:
 
         ttk.Button(
             toolbar, text="Load Model Suggestions", command=self._load_model_suggestions
+        ).pack(side=tk.LEFT, padx=5)
+
+        # Auto-load predictions toggle
+        self.auto_load_var = tk.BooleanVar()
+        ttk.Checkbutton(
+            toolbar,
+            text="Auto Load Predictions",
+            variable=self.auto_load_var,
+            command=self._toggle_auto_load_predictions,
         ).pack(side=tk.LEFT, padx=5)
 
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
@@ -291,6 +301,9 @@ class LabelingTool:
             if self.image_files:
                 self._load_current_image()
 
+    def _toggle_auto_load_predictions(self) -> None:
+        self.auto_load_predictions = self.auto_load_var.get()
+
     def _jump_to_unlabeled(self) -> None:
         """Jump to the next unlabeled image"""
         if not self.image_files:
@@ -338,6 +351,11 @@ class LabelingTool:
                 self.zoom_level = 1.0
 
             self._load_existing_labels()
+            
+            # Auto-load model predictions if enabled and no labels exist
+            if self.auto_load_predictions and not self.bounding_boxes:
+                self._load_model_suggestions()
+            
             self._update_display()
             self._update_image_info()
         except Exception as e:
@@ -773,6 +791,22 @@ class LabelingTool:
                 for i in range(len(boxes.xyxy)):
                     x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy()
                     cls = int(boxes.cls[i].cpu().numpy())
+                    
+                    # cls mapping
+                    cls_mapping = {
+                        0: 0,  # Red unknown -> Red unknown
+                        1: 1,  # Red 1 -> Red 1
+                        2: 2,  # Red 3 -> Red 3
+                        3: 0,  # Red 4 -> Red unknown
+                        4: 3,  # Red Sentry -> Red Sentry
+                        5: 4,  # Blue unknown -> Blue unknown
+                        6: 5,  # Blue 1 -> Blue 1
+                        7: 6,  # Blue 3 -> Blue 3
+                        8: 4,  # Blue 4 -> Blue unknown
+                        9: 7,  # Blue Sentry -> Blue Sentry
+                    }
+                    
+                    cls = cls_mapping[cls]
 
                     suggested_box = BoundingBox(
                         int(x1), int(y1), int(x2), int(y2), cls, suggested=True
