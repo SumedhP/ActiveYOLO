@@ -80,6 +80,9 @@ def generate_dataset():
     labels = _collect_all_labels(app_config.labels_path)
 
     print(f"Found {len(labels)} labels in total.")
+    
+    labels_with_data = [label for label in labels if not label.is_empty()]
+    print(f"{len(labels_with_data)} labels contain objects.")
 
     train_labels, val_labels = (
         stratified_split(labels, app_config.dataset.val_split)
