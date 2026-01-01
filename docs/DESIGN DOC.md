@@ -124,3 +124,5 @@ This is the primary user-facing component and will be implemented as a Tkinter-b
     - Running the uncertainty analysis script
     - Triggering model training
 - Keyboard and mouse shortcuts to streamline annotation workflow.
+- Make it so the user can zoom in and out of images, automatically adjusting the size based on the window size.
+- Ability to jump to the next unlabeled image.
