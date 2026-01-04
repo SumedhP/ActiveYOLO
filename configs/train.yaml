@@ -17,7 +17,7 @@ yolo:
     degrees: 20.0
     flipud: 0.0 # Don't flip upside down
     fliplr: 0.0 # Don't flip left to right
-    mosaic: 0.0 # Don't tile multiple images together
+    mosaic: 1.0 # Tile multiple images together
     scale: 0.7 # Scale images up and down by up to 70%
 
 ssl:
