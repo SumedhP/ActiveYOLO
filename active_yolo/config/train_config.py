@@ -28,6 +28,7 @@ class YOLOTrainConfig:
     batch: int
     device: Union[str, List[int]]  # 'cpu', [0, 1]
     optimizer: str
+    lr: float
 
     augmentation: AugmentationConfig
 
