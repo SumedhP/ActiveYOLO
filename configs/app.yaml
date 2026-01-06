@@ -1,6 +1,6 @@
 raw_images_path: raw_images/
 labels_path: labels/
-dataset_path: dataset/
+dataset_path: old_dataset/
 output_path: output/
 
 dataset:
