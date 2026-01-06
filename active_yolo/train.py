@@ -29,7 +29,7 @@ def train_model():
         compile=yolo_config.compile,
         device=yolo_config.device,
         optimizer=yolo_config.optimizer,
-        lr=yolo_config.lr,
+        lr0=yolo_config.lr,
         project="runs",
         **asdict(augmentation),
     )
