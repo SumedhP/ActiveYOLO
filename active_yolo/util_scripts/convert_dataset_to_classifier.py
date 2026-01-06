@@ -51,6 +51,14 @@ def crop_object_with_padding(
     
     # Crop the image
     cropped = image.crop((int(x1), int(y1), int(x2), int(y2)))
+    
+    # If the min side of the cropped image is less than 32, resize to have min side 32
+    min_side = min(cropped.size)
+    if min_side < 32:
+        scale_factor = 32 / min_side
+        new_size = (int(cropped.size[0] * scale_factor), int(cropped.size[1] * scale_factor))
+        cropped = cropped.resize(new_size, Image.LANCZOS)
+    
     return cropped
 
 
