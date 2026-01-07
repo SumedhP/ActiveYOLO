@@ -20,6 +20,9 @@ yolo:
     fliplr: 0.0 # Flip left to right
     mosaic: 1.0 # Tile multiple images together
     scale: 0.7 # Zoom in/out
+    shear: 5.0 # Shear angle
+    perspective: 0.00025 # Perspective shift
+    translate: 0.5 # Randomly shift the image
 
 ssl:
   out_dir: 'pretrain_runs'

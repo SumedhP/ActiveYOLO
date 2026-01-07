@@ -13,6 +13,9 @@ class AugmentationConfig:
     fliplr: float
     mosaic: float
     scale: float
+    shear: float
+    perspective: float
+    translate: float
 
 
 @dataclass
