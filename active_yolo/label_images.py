@@ -133,10 +133,10 @@ class LabelingTool:
         ttk.Separator(toolbar, orient=tk.VERTICAL).pack(side=tk.LEFT, fill=tk.Y, padx=5)
 
         # Zoom controls
-        ttk.Button(toolbar, text="Zoom In", command=self._zoom_in).pack(
+        ttk.Button(toolbar, text="Zoom In", command=lambda: self._zoom_in()).pack(
             side=tk.LEFT, padx=2
         )
-        ttk.Button(toolbar, text="Zoom Out", command=self._zoom_out).pack(
+        ttk.Button(toolbar, text="Zoom Out", command=lambda: self._zoom_out()).pack(
             side=tk.LEFT, padx=2
         )
         ttk.Button(toolbar, text="Fit", command=self._zoom_fit).pack(
@@ -824,9 +824,9 @@ class LabelingTool:
     def _on_mouse_wheel(self, event) -> None:
         # Zoom with mouse wheel
         if event.delta > 0 or event.num == 4:  # Zoom in
-            self._zoom_in()
+            self._zoom_in(event)
         else:  # Zoom out
-            self._zoom_out()
+            self._zoom_out(event)
 
     def _on_canvas_configure(self, event) -> None:
         """Called when canvas size changes (window resize)"""
@@ -835,15 +835,61 @@ class LabelingTool:
             # Use after_idle to avoid multiple rapid calls during window resize
             self.root.after_idle(self._update_display)
 
-    def _zoom_in(self) -> None:
-        self.zoom_level = min(self.zoom_level * 1.2, 5.0)
-        self.user_has_zoomed = True
-        self._update_display()
+    def _zoom_in(self, event=None) -> None:
+        self._zoom_at_point(1.2, event)
 
-    def _zoom_out(self) -> None:
-        self.zoom_level = max(self.zoom_level / 1.2, 0.1)
+    def _zoom_out(self, event=None) -> None:
+        self._zoom_at_point(1.0 / 1.2, event)
+
+    def _zoom_at_point(self, factor: float, event=None) -> None:
+        """Zoom in or out while keeping the point under the mouse cursor stationary"""
+        old_zoom = self.zoom_level
+        self.zoom_level = max(0.1, min(old_zoom * factor, 5.0))
         self.user_has_zoomed = True
-        self._update_display()
+
+        # If we have mouse event, zoom toward mouse position
+        if event and self.current_image:
+            # Get mouse position in canvas coordinates
+            canvas_x = self.canvas.canvasx(event.x)
+            canvas_y = self.canvas.canvasy(event.y)
+
+            # Convert to image coordinates (before zoom)
+            old_scale = self.scale_factor
+            img_x = canvas_x / old_scale if old_scale > 0 else 0
+            img_y = canvas_y / old_scale if old_scale > 0 else 0
+
+            # Update display (this recalculates scale_factor)
+            self._update_display()
+
+            # Convert image coordinates to new canvas coordinates (after zoom)
+            new_canvas_x = img_x * self.scale_factor
+            new_canvas_y = img_y * self.scale_factor
+
+            # Calculate how much to scroll to keep the image point under the mouse
+            # We want: new_canvas_x - scroll_x = event.x (mouse position in widget)
+            scroll_x = new_canvas_x - event.x
+            scroll_y = new_canvas_y - event.y
+
+            # Get canvas dimensions
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            # Get scroll region
+            bbox = self.canvas.bbox("all")
+            if bbox:
+                scroll_width = bbox[2] - bbox[0]
+                scroll_height = bbox[3] - bbox[1]
+
+                # Normalize scroll position (0.0 to 1.0)
+                if scroll_width > canvas_width:
+                    norm_x = scroll_x / (scroll_width - canvas_width)
+                    self.canvas.xview_moveto(max(0, min(1, norm_x)))
+                
+                if scroll_height > canvas_height:
+                    norm_y = scroll_y / (scroll_height - canvas_height)
+                    self.canvas.yview_moveto(max(0, min(1, norm_y)))
+        else:
+            self._update_display()
 
     def _zoom_fit(self) -> None:
         self.zoom_level = 1.0
