@@ -11,18 +11,17 @@ yolo:
   optimizer: 'AdamW'
   lr: 0.001
 
-  augmentation:
-    hsv_h: 0.08 # Hue, don't change hue as it affects colors
-    hsv_s: 0.5 # Saturation
-    hsv_v: 0.5 # Brightness
-    degrees: 30.0 # Tilt image
-    flipud: 0.5 # Flip upside down
-    fliplr: 0.5 # Flip left to right
-    mosaic: 1.0 # Tile multiple images together
-    scale: 0.7 # Zoom in/out
-    shear: 5.0 # Shear angle
-    perspective: 0.00025 # Perspective shift
-    translate: 0.5 # Randomly shift the image
+  hsv_h: 0.08 # Hue, don't change hue as it affects colors
+  hsv_s: 0.5 # Saturation
+  hsv_v: 0.5 # Brightness
+  degrees: 30.0 # Tilt image
+  flipud: 0.5 # Flip upside down
+  fliplr: 0.5 # Flip left to right
+  mosaic: 1.0 # Tile multiple images together
+  scale: 0.7 # Zoom in/out
+  shear: 5.0 # Shear angle
+  perspective: 0.00025 # Perspective shift
+  translate: 0.5 # Randomly shift the image
 
 ssl:
   out_dir: 'pretrain_runs'

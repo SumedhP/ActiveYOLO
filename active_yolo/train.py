@@ -12,26 +12,20 @@ settings.update({"tensorboard": True})
 def train_model():
     app_config = AppConfig.load_app_config()
     yolo_config = TrainConfig.load_train_config().yolo
-    augmentation = yolo_config.augmentation
 
     # Load the YOLO model
     model = YOLO(yolo_config.model)
 
     dataset_yaml_path = os.path.join(app_config.dataset_path, "dataset.yaml")
+    
+    model_dict = asdict(yolo_config)
+    model_dict.pop("model", None)
+    model_dict["lr0"] = model_dict.pop("lr", None)
 
     model.train(
         data=dataset_yaml_path,
-        resume=yolo_config.resume,
-        epochs=yolo_config.epochs,
-        patience=yolo_config.patience,
-        batch=yolo_config.batch,
-        amp=yolo_config.amp,
-        compile=yolo_config.compile,
-        device=yolo_config.device,
-        optimizer=yolo_config.optimizer,
-        lr0=yolo_config.lr,
+        **model_dict,
         project="runs",
-        **asdict(augmentation),
     )
 
     model.val()
