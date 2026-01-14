@@ -1,3 +1,4 @@
+from time import sleep
 from typing import List
 import os
 import glob
@@ -24,18 +25,28 @@ def compute_low_confidence_images():
     print("Loaded app config")
 
     image_pattern = os.path.join(app_config.raw_images_path, "*.jpg")
-    low_confidence_images = glob.glob(image_pattern)
-    print(len(low_confidence_images))
-    print(low_confidence_images[:10])
+    all_images = glob.glob(image_pattern)
+
+    # Filter out images that already have labels
+    low_confidence_images = []
+    for image_path in all_images:
+        # Get corresponding label filename
+        image_filename = os.path.basename(image_path)
+        label_filename = image_filename.replace(".jpg", ".txt")
+        label_path = os.path.join(app_config.labels_path, label_filename)
+
+        # Only include images without existing labels
+        if not os.path.exists(label_path):
+            low_confidence_images.append(image_path)
+
+    print(f"Total images: {len(all_images)}")
+    print(f"Unlabeled images: {len(low_confidence_images)}")
+
+    if not low_confidence_images:
+        print("No unlabeled images found. All images have been labeled!")
+        return
 
     model_path = app_config.active_learning.model
-    try:
-        model = YOLO(model_path)
-        model_path = model.export(format="engine", nms=True)
-    except Exception as e:
-        print(
-            f"Error exporting model to TensorRT: {e}, continuing with the current model"
-        )
 
     cpu_count = os.cpu_count()
     if cpu_count is not None:
@@ -70,6 +81,10 @@ def compute_low_confidence_images():
     print("Top 10 images post clustering:")
     for data in selected_images[:10]:
         print(f"{data.image_path} {data.entropy}")
+
+    print(
+        f"Number of images with Entropy of 1: {sum(1 for data in selected_images if data.entropy == 1.0)}"
+    )
 
     output_file = os.path.join(
         app_config.output_path, active_learning_config.output_file_name

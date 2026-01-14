@@ -13,6 +13,9 @@ class AugmentationConfig:
     fliplr: float
     mosaic: float
     scale: float
+    shear: float
+    perspective: float
+    translate: float
 
 
 @dataclass
@@ -28,6 +31,7 @@ class YOLOTrainConfig:
     batch: int
     device: Union[str, List[int]]  # 'cpu', [0, 1]
     optimizer: str
+    lr: float
 
     augmentation: AugmentationConfig
 

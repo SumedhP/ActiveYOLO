@@ -1,66 +1,78 @@
-from collections import Counter
-from typing import List, Tuple
+from collections import Counter, defaultdict
+import math
+from typing import Dict, List, Tuple
 from label import Label
 import random
+
+BACKGROUND_ID = -1
 
 
 def stratified_split(
     labels: List[Label], val_ratio: float
 ) -> Tuple[List[Label], List[Label]]:
-    total_class_counts = Counter()
-    image_class_counts = []
-
+    # 1. Total class counts
+    total_class_counts: Dict[int, int] = defaultdict(int)
     for label in labels:
-        class_counts = label.get_class_ids()
-        total_class_counts.update(class_counts)
-        image_class_counts.append(class_counts)
+        class_ids = label.get_class_ids()
+        if not class_ids:
+            total_class_counts[BACKGROUND_ID] += 1
+        else:
+            for class_id, count in label.get_class_ids().items():
+                total_class_counts[class_id] += count
 
-    desired_class_counts = {
-        cls: int(count * val_ratio) for cls, count in total_class_counts.items()
+    # 2. Target validation counts per class
+    target_val_counts = {
+        class_id: math.ceil(count * val_ratio)
+        for class_id, count in total_class_counts.items()
     }
 
-    current_val_counts = Counter()
-    val_set = []
-    train_set = []
+    # 3. Current validation counts
+    current_val_counts: Dict[int, int] = defaultdict(int)
 
-    def _rarity_score(idx):
-        # Calculate the rarity score based on the class counts
-        # Something feels fishy about this logic
+    # 4. Sort labels by rarity & size
+    def label_priority(label: Label) -> float:
+        class_ids = label.get_class_ids()
+        if not class_ids:
+            return float("inf")  # Background image lowest priority
+
         score = 0.0
-        for cls in image_class_counts[idx]:
-            score += 1.0 / total_class_counts[cls]
-        return score
+        for class_id, count in class_ids.items():
+            # rarer classes get higher priority
+            score += count / (total_class_counts[class_id] + 1e-6)
+        return -score  # negative for descending sort
 
-    indices = list(range(len(labels)))
-    indices.sort(key=_rarity_score, reverse=True)
+    sorted_labels = sorted(labels, key=label_priority)
 
-    val_set_indices = []
+    train_labels: List[Label] = []
+    val_labels: List[Label] = []
 
-    # Time for greed
-    for idx in indices:
-        class_counts = image_class_counts[idx]
+    # 5. Greedy assignment
+    for label in sorted_labels:
+        class_ids = label.get_class_ids()
 
-        fills_need = False
-        for cls in class_counts:
-            if current_val_counts[cls] < desired_class_counts[cls]:
-                fills_need = True
+        if not class_ids:
+            label_class_counts = {BACKGROUND_ID: 1}
+        else:
+            label_class_counts = class_ids
+
+        can_go_to_val = True
+        for class_id, count in label_class_counts.items():
+            if current_val_counts[class_id] + count > target_val_counts[class_id]:
+                can_go_to_val = False
                 break
 
-        if fills_need:
-            val_set_indices.append(idx)
-            current_val_counts.update(class_counts)
+        if can_go_to_val:
+            val_labels.append(label)
+            for class_id, count in label_class_counts.items():
+                current_val_counts[class_id] += count
+        else:
+            train_labels.append(label)
 
-    # If we don't have enough labels in the validation set, add more:
-    while len(val_set_indices) < int(len(labels) * val_ratio):
-        for idx in indices:
-            if idx not in val_set_indices:
-                val_set_indices.append(idx)
-                break
+    print("Final validation class distribution:")
+    for class_id, count in sorted(current_val_counts.items()):
+        print(f"{class_id}: {count}")
 
-    val_set = [labels[idx] for idx in val_set_indices]
-    train_set = [label for label in labels if label not in val_set]
-
-    return train_set, val_set
+    return train_labels, val_labels
 
 
 def random_split(

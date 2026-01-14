@@ -208,8 +208,8 @@ __marimo__/
 
 # Project specific ignores
 *raw_images/*
-dataset/*
-runs/*
+*dataset/*
+*runs/*
 output/*
 models/*
 labels/*.txt

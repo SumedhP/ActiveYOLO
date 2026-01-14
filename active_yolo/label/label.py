@@ -42,3 +42,6 @@ class Label:
                 class_ids[annotation.id] = 0
             class_ids[annotation.id] += 1
         return class_ids
+
+    def is_empty(self) -> bool:
+        return len(self.annotations) == 0
