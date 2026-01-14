@@ -283,7 +283,7 @@ class LabelingTool:
                         self.entropy_values[image_path] = entropy_value
                     elif parts:
                         self.image_files.append(parts[0])
-        
+
         # Reverse the list if invert order is enabled
         if self.invert_order:
             self.image_files.reverse()
@@ -351,11 +351,11 @@ class LabelingTool:
                 self.zoom_level = 1.0
 
             self._load_existing_labels()
-            
+
             # Auto-load model predictions if enabled and no labels exist
             if self.auto_load_predictions and not self.bounding_boxes:
                 self._load_model_suggestions()
-            
+
             self._update_display()
             self._update_image_info()
         except Exception as e:
@@ -791,7 +791,7 @@ class LabelingTool:
                 for i in range(len(boxes.xyxy)):
                     x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy()
                     cls = int(boxes.cls[i].cpu().numpy())
-                    
+
                     # cls mapping
                     cls_mapping = {
                         0: 0,  # Red unknown -> Red unknown
@@ -805,7 +805,7 @@ class LabelingTool:
                         8: 4,  # Blue 4 -> Blue unknown
                         9: 7,  # Blue Sentry -> Blue Sentry
                     }
-                    
+
                     cls = cls_mapping[cls]
 
                     suggested_box = BoundingBox(
