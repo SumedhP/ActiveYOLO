@@ -1,49 +1,20 @@
-import numpy as np
 from typing import List
-from functools import cmp_to_key
+
+import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
-from dataclasses import dataclass
+
+from .embedding import ImageEmbeddingResult
 
 
-@dataclass
-class ImageData:
-    image_path: str
-    entropy: float
-    embedding: np.ndarray
-
-    def __hash__(self):
-        return hash(self.image_path)
-
-    def __lt__(self, other):
-        # If entropy is the same, compare by image_path to ensure consistent ordering
-        if self.entropy == other.entropy:
-            return self.image_path > other.image_path
-        return self.entropy < other.entropy
-
-    def lt_with_tolerance(self, other, tol=1e-6):
-        if abs(self.entropy - other.entropy) < tol:
-            return self.image_path > other.image_path
-        return self.entropy < other.entropy
-
-
-def cluster_images(
-    image_data: List[ImageData], num_clusters: int, num_images: int
-) -> List[ImageData]:
+def filter_images_entropy(
+    image_data: List[ImageEmbeddingResult], num_clusters: int, num_images: int
+) -> List[ImageEmbeddingResult]:
     if len(image_data) == 0:
         return []
 
     if num_images >= len(image_data):
-        entropy_tol = 0.01
-        return sorted(
-            image_data,
-            key=cmp_to_key(
-                lambda a, b: -1
-                if a.lt_with_tolerance(b, tol=entropy_tol)
-                else (1 if b.lt_with_tolerance(a, tol=entropy_tol) else 0)
-            ),
-            reverse=True,
-        )
+        return sorted(image_data)
 
     num_clusters = min(num_clusters, len(image_data))
 
@@ -72,5 +43,37 @@ def cluster_images(
             selected_images.append(cluster_group.pop(0))
 
         current_cluster = (current_cluster + 1) % num_clusters
+
+    return sorted(selected_images, reverse=True)
+
+
+def filter_images_centroid(
+    image_data: List[ImageEmbeddingResult], num_images: int
+) -> List[ImageEmbeddingResult]:
+    if len(image_data) == 0:
+        return []
+
+    if num_images >= len(image_data):
+        return sorted(image_data)
+
+    num_clusters = num_images
+
+    embeddings = np.array([data.embedding for data in image_data])
+    embeddings = normalize(embeddings, axis=1, norm="l2")
+    cluster_labels = KMeans(n_clusters=num_clusters).fit_predict(embeddings)
+
+    selected_images = []
+    # Select the image closest to the centroid in each cluster
+    for cluster_idx in range(num_clusters):
+        cluster_indices = np.where(cluster_labels == cluster_idx)[0]
+        cluster_embeddings = embeddings[cluster_indices]
+
+        centroid = np.mean(cluster_embeddings, axis=0)
+        centroid = centroid / np.linalg.norm(centroid)
+
+        cosine_distances = 1 - np.dot(cluster_embeddings, centroid)
+        closest_index = cluster_indices[np.argmin(cosine_distances)]
+
+        selected_images.append(image_data[closest_index])
 
     return sorted(selected_images, reverse=True)

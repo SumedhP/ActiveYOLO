@@ -1,30 +1,34 @@
-from time import sleep
-from typing import List
-import os
+import argparse
 import glob
-from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
-from config import AppConfig
+import os
+import shutil
+from typing import List
+
 from active_learning import (
-    ImageData,
-    compute_entropies_mp,
+    ImageEmbeddingResult,
+    compute_embeddings_and_entropy_mp,
     compute_embeddings_mp,
-    cluster_images,
+)
+from config import AppConfig
+from tqdm import tqdm
+
+from active_yolo.active_learning.clustering import (
+    filter_images_centroid,
+    filter_images_entropy,
 )
 
 
-def export_images(image_data_list: List[ImageData], export_file_path: str) -> None:
+def _export_image_list(
+    image_data_list: List[ImageEmbeddingResult], export_file_path: str
+) -> None:
     os.makedirs(os.path.dirname(export_file_path), exist_ok=True)
     with open(export_file_path, "w") as file:
         for image_data in image_data_list:
             file.write(f"{image_data.image_path} {image_data.entropy}\n")
 
 
-def compute_low_confidence_images():
-    app_config = AppConfig.load_app_config()
-    active_learning_config = app_config.active_learning
-    print("Loaded app config")
-
-    image_pattern = os.path.join(app_config.raw_images_path, "*.jpg")
+def _find_unlabeled_images(raw_images_path: str, labels_path: str) -> List[str]:
+    image_pattern = os.path.join(raw_images_path, "*.jpg")
     all_images = glob.glob(image_pattern)
 
     # Filter out images that already have labels
@@ -33,7 +37,7 @@ def compute_low_confidence_images():
         # Get corresponding label filename
         image_filename = os.path.basename(image_path)
         label_filename = image_filename.replace(".jpg", ".txt")
-        label_path = os.path.join(app_config.labels_path, label_filename)
+        label_path = os.path.join(labels_path, label_filename)
 
         # Only include images without existing labels
         if not os.path.exists(label_path):
@@ -44,35 +48,34 @@ def compute_low_confidence_images():
 
     if not low_confidence_images:
         print("No unlabeled images found. All images have been labeled!")
+        return []
+
+    return low_confidence_images
+
+
+def compute_low_confidence_images():
+    app_config = AppConfig.load_app_config()
+    active_learning_config = app_config.active_learning
+    print("Loaded app config")
+
+    low_confidence_images = _find_unlabeled_images(
+        app_config.raw_images_path, app_config.labels_path
+    )
+    if not low_confidence_images:
         return
 
     model_path = app_config.active_learning.model
 
-    cpu_count = os.cpu_count()
-    if cpu_count is not None:
-        num_processes = min(32, cpu_count + 4)
-    else:
-        num_processes = 4
-
-    entropies = compute_entropies_mp(
-        model_path, low_confidence_images, num_processes=num_processes
+    image_data_list = compute_embeddings_and_entropy_mp(
+        model_path, low_confidence_images
     )
-    embeddings = compute_embeddings_mp(
-        model_path, low_confidence_images, num_processes=num_processes
-    )
-
-    image_data_list: List[ImageData] = []
-    for image_pattern in low_confidence_images:
-        entropy = entropies[image_pattern]
-        embedding = embeddings[image_pattern]
-        image_data_list.append(ImageData(image_pattern, entropy, embedding))
 
     image_data_list = sorted(image_data_list, key=lambda x: x.entropy, reverse=True)
     print("Top 10 images by entropy:")
     for data in image_data_list[:10]:
         print(f"{data.image_path} {data.entropy}")
 
-    selected_images = cluster_images(
+    selected_images = filter_images_entropy(
         image_data_list,
         num_clusters=active_learning_config.num_clusters,
         num_images=active_learning_config.images_per_iteration,
@@ -89,8 +92,46 @@ def compute_low_confidence_images():
     output_file = os.path.join(
         app_config.output_path, active_learning_config.output_file_name
     )
-    export_images(selected_images, output_file)
+    _export_image_list(selected_images, output_file)
+
+
+def compute_diverse_imageset():
+    app_config = AppConfig.load_app_config()
+    active_learning_config = app_config.active_learning
+    print("Loaded app config")
+
+    low_confidence_images = _find_unlabeled_images(
+        app_config.raw_images_path, app_config.labels_path
+    )
+    if not low_confidence_images:
+        return
+
+    model_path = app_config.active_learning.model
+    image_data_list = compute_embeddings_mp(model_path, low_confidence_images)
+    selected_images = filter_images_centroid(
+        image_data_list,
+        num_images=active_learning_config.images_per_iteration,
+    )
+    # Export images under the input image folder + _small directory
+
+    output_file = app_config.raw_images_path.rstrip("/") + "_small/"
+    os.makedirs(output_file, exist_ok=True)
+    for data in tqdm(selected_images):
+        image_filename = os.path.basename(data.image_path)
+        destination_path = os.path.join(output_file, image_filename)
+        shutil.copy2(data.image_path, destination_path)
 
 
 if __name__ == "__main__":
-    compute_low_confidence_images()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--initial",
+        action="store_true",
+        help="Compute a diverse initial image set instead of low confidence images.",
+    )
+    args = parser.parse_args()
+
+    if args.initial:
+        compute_diverse_imageset()
+    else:
+        compute_low_confidence_images()

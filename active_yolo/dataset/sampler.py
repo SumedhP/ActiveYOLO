@@ -1,8 +1,9 @@
-from collections import Counter, defaultdict
 import math
-from typing import Dict, List, Tuple
-from label import Label
 import random
+from collections import defaultdict
+from typing import Dict, List, Tuple
+
+from label import Label
 
 BACKGROUND_ID = -1
 

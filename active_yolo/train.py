@@ -1,9 +1,10 @@
-import os
-from ultralytics import YOLO, settings  # type: ignore[reportPrivateImportUsage]
-from lightly_train import pretrain
-from config import AppConfig, TrainConfig
-from dataclasses import asdict
 import argparse
+import os
+from dataclasses import asdict
+
+from config import AppConfig, TrainConfig
+from lightly_train import pretrain
+from ultralytics import YOLO, settings  # type: ignore[reportPrivateImportUsage]
 
 # Enable TensorBoard logging
 settings.update({"tensorboard": True})

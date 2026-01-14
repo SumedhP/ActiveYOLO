@@ -1,12 +1,13 @@
-from typing import List, Dict, Counter
+import glob
 import os
 import shutil
-import glob
+from typing import Counter, Dict, List
+
+from config import AppConfig, DataConfig
+from label import Label
 from tqdm import tqdm
 
-from config import DataConfig, AppConfig
-from label import Label
-from dataset import stratified_split, random_split  # type: ignore[unresolved-import]
+from dataset import random_split, stratified_split  # type: ignore[unresolved-import]
 
 
 def _create_directory_structure(file_path: str) -> None:

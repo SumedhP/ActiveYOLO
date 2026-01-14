@@ -1,11 +1,12 @@
+import multiprocessing
+from dataclasses import dataclass
 from functools import partial
-from ultralytics.engine.results import Results
+from typing import List
+
+import cv2
 import numpy as np
 from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
-from typing import List
-from dataclasses import dataclass
-import cv2
-import multiprocessing
+from ultralytics.engine.results import Results
 
 
 def compute_entropy(model_output: Results) -> float:
@@ -32,6 +33,12 @@ class ImageEmbeddingResult:
     image_path: str
     embedding: np.ndarray
     entropy: float
+
+    def __hash__(self):
+        return hash(self.image_path)
+
+    def __lt__(self, other):
+        return self.entropy < other.entropy
 
 
 def _compute_embeddings_and_entropy(
@@ -83,7 +90,9 @@ def compute_embeddings_and_entropy_mp(
     return flattened_results
 
 
-def _compute_embeddings(model_path: str, image_paths: List[str]) -> List[np.ndarray]:
+def _compute_embeddings(
+    model_path: str, image_paths: List[str]
+) -> List[ImageEmbeddingResult]:
     embeddding_model = YOLO(model_path)
     embeddings = []
 
@@ -94,14 +103,20 @@ def _compute_embeddings(model_path: str, image_paths: List[str]) -> List[np.ndar
             continue
 
         embedding = embeddding_model.embed(image, verbose=False)[0].cpu().numpy()
-        embeddings.append(embedding)
+        embeddings.append(
+            ImageEmbeddingResult(
+                image_path=image_path,
+                embedding=embedding,
+                entropy=0.0,
+            )
+        )
 
     return embeddings
 
 
 def compute_embeddings_mp(
     model_path: str, image_paths: List[str], num_processes: int = 6
-) -> List[np.ndarray]:
+) -> List[ImageEmbeddingResult]:
     if not image_paths:
         return []
 

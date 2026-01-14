@@ -1,4 +1,4 @@
-from config import DataConfig, TrainConfig, AppConfig
+from config import AppConfig, DataConfig, TrainConfig
 
 
 def main():

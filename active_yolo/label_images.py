@@ -1,18 +1,17 @@
-import time as time
-
-from typing import List, Optional
-import os
 import glob
+import os
+import time as time
 import tkinter as tk
-from tkinter import ttk, filedialog, messagebox
-from PIL import Image, ImageTk, ImageDraw
-from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
+from tkinter import filedialog, messagebox, ttk
+from typing import List, Optional
 
-from config import AppConfig, DataConfig
-from label import Label, BoundingBox
-from generate_dataset import generate_dataset
 from analyze_images import compute_low_confidence_images
+from config import AppConfig, DataConfig
+from generate_dataset import generate_dataset
+from label import BoundingBox, Label
+from PIL import Image, ImageDraw, ImageTk
 from train import train_model
+from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
 
 
 class LabelingTool:

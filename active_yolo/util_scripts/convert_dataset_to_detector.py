@@ -1,13 +1,13 @@
-import os
 import glob
+import os
 import shutil
-from tqdm import tqdm
-
 import sys
+
+from tqdm import tqdm
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from config import AppConfig, DataConfig
+from config import AppConfig
 from label import Label
 
 
@@ -112,7 +112,7 @@ def convert_dataset_to_detector():
 
     print(f"Source dataset: {app_config.dataset_path}")
     print(f"Output path: {output_path}")
-    print(f"\nConverting all red_* classes to 'red' and blue_* classes to 'blue'")
+    print("\nConverting all red_* classes to 'red' and blue_* classes to 'blue'")
 
     # Delete existing output folder if exists
     if os.path.exists(output_path):

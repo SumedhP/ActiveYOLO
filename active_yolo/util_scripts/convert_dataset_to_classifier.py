@@ -1,10 +1,9 @@
-import os
 import glob
-from pathlib import Path
+import os
+import sys
+
 from PIL import Image
 from tqdm import tqdm
-
-import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -134,7 +133,7 @@ def process_split(
         image.close()
 
     print(f"\n{split_folder_name} split: Created {crop_count} cropped images")
-    print(f"Class distribution:")
+    print("Class distribution:")
     for class_name, count in sorted(class_counts.items()):
         print(f"  {class_name}: {count}")
 
@@ -152,9 +151,9 @@ def convert_dataset_to_classifier():
 
     print(f"Source dataset: {app_config.dataset_path}")
     print(f"Output path: {output_path}")
-    print(f"\nCreating classifier dataset structure:")
-    print(f"  Train/ (with class subfolders)")
-    print(f"  Val/ (with class subfolders)")
+    print("\nCreating classifier dataset structure:")
+    print("  Train/ (with class subfolders)")
+    print("  Val/ (with class subfolders)")
 
     # Delete existing output folder if exists
     if os.path.exists(output_path):
