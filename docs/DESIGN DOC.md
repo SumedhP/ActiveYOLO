@@ -124,7 +124,7 @@ This is the primary user-facing component and will be implemented as a Tkinter-b
 
 ### Active Learning Mode
 
-- Provide a toggle that switches the image source from raw images to those listed in `active_learning_images.txt.txt`.
+- Provide a toggle that switches the image source from raw images to those listed in `active_learning_images.txt`.
 - In this mode, the user is prompted to annotate model-suggested images first.
 
 ### Model-Suggested Labels
@@ -133,13 +133,10 @@ This is the primary user-facing component and will be implemented as a Tkinter-b
 - Display suggested boxes in a distinct color.
 - Allow users to modify, accept, or delete suggested boxes.
 - Toggle to have this load in on images that don't have any existing labels.
+- When run a model on the image, it should run at the full image resolution to maximize recall (imgsz parameter in Ultralytics API).
 
 ### Additional UI Features
 
-- Menu options for:
-    - Generating the dataset
-    - Running the active learning script
-    - Triggering model training
 - Keyboard and mouse shortcuts to streamline annotation workflow.
 - Make it so the user can zoom in and out of images, automatically adjusting the size based on the window size.
 - Ability to jump to the next unlabeled image.
