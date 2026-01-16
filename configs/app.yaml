@@ -11,7 +11,8 @@ active_learning:
   model: "models/best.pt"
   images_per_iteration: 1000
   num_clusters: 50
-  output_file_name: "low_confidence_images.txt"
+  output_file_name: "active_learning_images.txt"
+  embeddings_file_name: "embeddings.csv"
 
 inference:
   confidence_threshold: 0.25

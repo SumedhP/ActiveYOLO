@@ -15,6 +15,7 @@ class ActiveLearningConfig:
     images_per_iteration: int  # Number of images to send to human
     num_clusters: int  # For K-means clustering of embeddings
     output_file_name: str
+    embeddings_file_name: str
 
 
 @dataclass

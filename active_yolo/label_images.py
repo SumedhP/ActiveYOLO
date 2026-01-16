@@ -5,12 +5,9 @@ import tkinter as tk
 from tkinter import filedialog, messagebox, ttk
 from typing import List, Optional
 
-from analyze_images import compute_low_confidence_images
 from config import AppConfig, DataConfig
-from generate_dataset import generate_dataset
 from label import BoundingBox, Label
 from PIL import Image, ImageDraw, ImageTk
-from train import train_model
 from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
 
 
@@ -66,11 +63,7 @@ class LabelingTool:
         menubar.add_cascade(label="File", menu=file_menu)
         file_menu.add_command(label="Open Directory", command=self._open_directory)
         file_menu.add_separator()
-        file_menu.add_command(label="Generate Dataset", command=self._generate_dataset)
-        file_menu.add_command(label="Train Model", command=self._train_model)
-        file_menu.add_command(
-            label="Run Active Learning Analysis", command=self._run_active_learning
-        )
+        # Menu options removed per new design (use CLI instead)
 
         # Toolbar
         toolbar = ttk.Frame(self.root)
@@ -890,37 +883,6 @@ class LabelingTool:
             self._load_images()
             if self.image_files:
                 self._load_current_image()
-
-    def _generate_dataset(self) -> None:
-        try:
-            generate_dataset()
-            messagebox.showinfo("Success", "Dataset generated successfully!")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to generate dataset: {e}")
-
-    def _train_model(self) -> None:
-        try:
-            train_model()
-            messagebox.showinfo("Success", "Model training completed!")
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to train model: {e}")
-
-    def _run_active_learning(self) -> None:
-        try:
-            compute_low_confidence_images()
-            messagebox.showinfo(
-                "Success",
-                "Active learning analysis completed!\n\nTip: Enable 'Use Active Learning List' to view suggested images.",
-            )
-
-            # Only refresh if already in active learning mode
-            if self.active_learning_mode:
-                self._load_images()
-                if self.image_files:
-                    self.current_index = 0
-                    self._load_current_image()
-        except Exception as e:
-            messagebox.showerror("Error", f"Failed to run active learning: {e}")
 
     def run(self) -> None:
         self.root.mainloop()
