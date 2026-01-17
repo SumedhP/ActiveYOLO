@@ -1,12 +1,12 @@
 yolo:
-  model: yolo11n.pt
+  model: models/ssl.pt
   resume: False
   amp: False
   compile: True
 
   epochs: 300
   patience: 0
-  batch: 64
+  batch: 16
   device: [0]
   optimizer: 'AdamW'
   lr: 0.001

@@ -12,6 +12,15 @@ from ultralytics import YOLO  # type: ignore[reportPrivateImportUsage]
 
 
 class LabelingTool:
+    def _get_label_path(self, image_path: str) -> str:
+        """Get the label file path corresponding to an image path, preserving subfolder structure under labels/"""
+        # Find relative path from images root (imageset, validation, etc.)
+        images_root = self.app_config.images_path  # e.g., images/
+        rel_path = os.path.relpath(image_path, images_root)
+        label_filename = os.path.splitext(rel_path)[0] + ".txt"
+        label_path = os.path.join(self.app_config.labels_path, label_filename)
+        return label_path
+        
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("ActiveYOLO Labeling Tool")
@@ -324,9 +333,8 @@ class LabelingTool:
         messagebox.showinfo("Info", "All images have been labeled!")
 
     def _has_labels(self, image_path: str) -> bool:
-        """Check if an image has an existing label file"""
-        label_filename = os.path.basename(image_path).replace(".jpg", ".txt")
-        label_path = os.path.join(self.app_config.labels_path, label_filename)
+        """Check if an image has an existing label file (in correct subfolder)"""
+        label_path = self._get_label_path(image_path)
         return os.path.exists(label_path)
 
     def _load_current_image(self) -> None:
@@ -439,11 +447,7 @@ class LabelingTool:
         if not self.current_image_path or not self.current_image:
             return
 
-        label_filename = os.path.basename(self.current_image_path).replace(
-            ".jpg", ".txt"
-        )
-        label_path = os.path.join(self.app_config.labels_path, label_filename)
-
+        label_path = self._get_label_path(self.current_image_path)
         self.bounding_boxes = []
 
         if os.path.exists(label_path):
@@ -490,10 +494,7 @@ class LabelingTool:
         if not self.current_image_path or not self.current_image:
             return
 
-        label_filename = os.path.basename(self.current_image_path).replace(
-            ".jpg", ".txt"
-        )
-        label_path = os.path.join(self.app_config.labels_path, label_filename)
+        label_path = self._get_label_path(self.current_image_path)
 
         # Ensure labels directory exists
         os.makedirs(os.path.dirname(label_path), exist_ok=True)

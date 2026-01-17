@@ -19,7 +19,7 @@ images/
 
 imageset/
 
-validation_set/
+validation/
 
 embeddings.csv - A CSV file representing a image file path, cluster id, and embedding
 
@@ -27,7 +27,7 @@ Labels/
 
 imageset/
 
-validation_set/
+validation/
 
 - Contains YOLO-format label files
 - One `.txt` file per image, storing bounding boxes and class IDs.

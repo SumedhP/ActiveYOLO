@@ -5,7 +5,7 @@ output_path: output/
 
 active_learning:
   model: "models/detector.pt"
-  images_per_iteration: 100
+  images_per_iteration: 150
   num_clusters: 1000
   output_file_name: "active_learning_images.txt"
   embeddings_file_name: "embeddings.csv"

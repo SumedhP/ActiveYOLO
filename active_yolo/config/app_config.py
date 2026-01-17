@@ -38,7 +38,7 @@ class AppConfig:
     @property
     def validation_images_path(self) -> str:
         """Path to validation set images."""
-        return os.path.join(self.images_path, "validation_set")
+        return os.path.join(self.images_path, "validation")
     
     @property
     def imageset_labels_path(self) -> str:
@@ -48,7 +48,7 @@ class AppConfig:
     @property
     def validation_labels_path(self) -> str:
         """Path to validation set labels."""
-        return os.path.join(self.labels_path, "validation_set")
+        return os.path.join(self.labels_path, "validation")
 
     @staticmethod
     def load_from_yaml(file_path: str) -> "AppConfig":
