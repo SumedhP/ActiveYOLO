@@ -1,11 +1,7 @@
-raw_images_path: raw_images/
+images_path: images/
 labels_path: labels/
 dataset_path: dataset/
 output_path: output/
-
-dataset:
-  val_split: 0.2
-  balance_classes: True
 
 active_learning:
   model: "models/best.pt"

@@ -250,7 +250,7 @@ class LabelingTool:
         if self.active_learning_mode:
             self._load_active_learning_images()
         else:
-            pattern = os.path.join(self.app_config.raw_images_path, "*.jpg")
+            pattern = os.path.join(self.app_config.imageset_images_path, "*.jpg")
             self.image_files = sorted(glob.glob(pattern))
 
         self.current_index = 0
@@ -879,7 +879,7 @@ class LabelingTool:
     def _open_directory(self) -> None:
         directory = filedialog.askdirectory(title="Select Images Directory")
         if directory:
-            self.app_config.raw_images_path = directory
+            self.app_config.images_path = directory
             self._load_images()
             if self.image_files:
                 self._load_current_image()

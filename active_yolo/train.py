@@ -4,7 +4,7 @@ from dataclasses import asdict
 
 from config import AppConfig, TrainConfig
 from lightly_train import pretrain
-from ultralytics import YOLO, settings  # type: ignore[reportPrivateImportUsage]
+from ultralytics import YOLO, settings
 
 # Enable TensorBoard logging
 settings.update({"tensorboard": True})
@@ -26,7 +26,7 @@ def train_model():
     model.train(
         data=dataset_yaml_path,
         **model_dict,
-        project="runs",
+        project="models",
     )
 
     model.val()
@@ -39,7 +39,7 @@ def train_backbone():
     pretrain(
         out=ssl_config.out_dir,
         model=ssl_config.model,
-        data=app_config.raw_images_path,
+        data=app_config.imageset_images_path,
         epochs=ssl_config.epochs,
         batch_size=ssl_config.batch,
         accelerator=ssl_config.accelerator,

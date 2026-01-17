@@ -4,39 +4,46 @@ import random
 import numpy as np
 from typing import List, Tuple
 from collections import defaultdict
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import normalize
 
 from active_yolo.config.app_config import AppConfig
 
 
-def load_embeddings(csv_path: str) -> Tuple[List[str], np.ndarray]:
-    """Loads embeddings from CSV file."""
+def load_embeddings(csv_path: str) -> Tuple[List[str], List[int], np.ndarray]:
+    """
+    Loads embeddings and cluster IDs from CSV file.
+    Expected format: filepath, cluster_id, embedding_vector (space-separated)
+    """
     if not os.path.exists(csv_path):
         raise FileNotFoundError(f"Embeddings file not found: {csv_path}")
 
     paths = []
+    cluster_ids = []
     embeddings = []
 
     with open(csv_path, "r") as f:
         reader = csv.reader(f)
-        _ = next(reader, None)  # Skip header
+        _ = next(reader, None)
         for row in reader:
-            if len(row) < 2:
-                continue
+            if len(row) < 3:
+                raise ValueError(f"Invalid row in embeddings CSV: {row}")
+            
             paths.append(row[0])
-            # Convert space-separated string back to numpy array
-            vec = np.fromstring(row[1], sep=" ")
-            embeddings.append(vec)
+            try:
+                cluster_ids.append(int(row[1]))
+                vec = np.fromstring(row[2], sep=" ")
+                embeddings.append(vec)
+            except ValueError:
+                print(f"Warning: Could not parse row for {row[0]}")
+                continue
 
-    return paths, np.array(embeddings)
+    return paths, cluster_ids, np.array(embeddings)
 
 
 def is_labeled(image_path: str, labels_dir: str) -> bool:
-    """Checks if a label file exists for the given image."""
+    """Checks if a label file exists for the given image in imageset labels."""
     base_name = os.path.basename(image_path)
     file_name = os.path.splitext(base_name)[0]
-    label_path = os.path.join(labels_dir, f"{file_name}.txt")
+    label_path = os.path.join(labels_dir, "imageset", f"{file_name}.txt")
     return os.path.exists(label_path)
 
 
@@ -54,8 +61,8 @@ def suggest_active_learning_images():
     )
 
     # 1. Load Data
-    print("Loading embeddings...")
-    paths, embeddings = load_embeddings(embeddings_file)
+    print("Loading embeddings and cluster IDs...")
+    paths, cluster_labels, embeddings = load_embeddings(embeddings_file)
     if not paths:
         print("No embeddings found.")
         return
@@ -72,14 +79,9 @@ def suggest_active_learning_images():
         print("All images are already labeled!")
         return
 
-    # 3. Clustering
-    print(
-        f"Clustering {len(embeddings)} images into {app_config.active_learning.num_clusters} clusters..."
-    )
-    norm_embeddings = normalize(embeddings, axis=1, norm="l2")
-    kmeans = KMeans(n_clusters=app_config.active_learning.num_clusters, random_state=42)
-    cluster_labels = kmeans.fit_predict(norm_embeddings)
-
+    # 3. Clustering (Skipped: Using pre-computed clusters from CSV)
+    print(f"Using pre-computed clusters for {len(embeddings)} images.")
+    
     # 4. Compute Coverage
     # cluster_id -> count of labeled images
     cluster_coverage = defaultdict(int)
@@ -91,10 +93,13 @@ def suggest_active_learning_images():
             cluster_coverage[cluster_id] += 1
         else:
             cluster_unlabeled_pool[cluster_id].append(idx)
+            
+    # Determine the set of all clusters present in the data
+    all_present_clusters = set(cluster_labels)
+    # Ensure they are sorted for reproducible iteration if counts are equal
+    all_clusters = sorted(list(all_present_clusters))
 
     # 5. Prioritize Clusters (Low coverage first)
-    # Get all unique cluster IDs (0 to K-1)
-    all_clusters = list(range(app_config.active_learning.num_clusters))
     # Sort by coverage count
     sorted_clusters = sorted(all_clusters, key=lambda c: cluster_coverage[c])
 

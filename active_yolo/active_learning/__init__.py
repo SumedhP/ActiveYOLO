@@ -1,9 +1,9 @@
 from .embedding import (
     ImageEmbeddingResult,
-    compute_embeddings_mp,
+    compute_embeddings
 )
 
 __all__ = [
-    "compute_embeddings_mp",
+    "compute_embeddings",
     "ImageEmbeddingResult",
 ]
