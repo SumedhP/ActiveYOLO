@@ -29,9 +29,6 @@ def train_model():
         project="models",
     )
 
-    model.val()
-
-
 def train_backbone():
     app_config = AppConfig.load_app_config()
     ssl_config = TrainConfig.load_train_config().ssl
