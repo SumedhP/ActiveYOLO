@@ -176,7 +176,7 @@ class LabelingTool:
         self.class_combobox["values"] = class_options
         if class_options:
             self.class_combobox.current(0)
-            self.class_var.trace("w", self._on_class_change)
+            self.class_var.trace_add("write", self._on_class_change)
 
         # Image info
         ttk.Label(right_frame, text="Image Info:").pack(anchor=tk.W, pady=(10, 5))

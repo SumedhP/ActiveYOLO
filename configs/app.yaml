@@ -4,7 +4,7 @@ dataset_path: dataset/
 output_path: output/
 
 active_learning:
-  model: "models/ssl.pt"
+  model: "models/detector.pt"
   images_per_iteration: 100
   num_clusters: 1000
   output_file_name: "active_learning_images.txt"
