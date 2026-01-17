@@ -39,18 +39,20 @@ def generate_embeddings():
     results = compute_embeddings(model_path, image_paths)
 
     # Perform Clustering ----------------------------------------------------------------
-    print(f"Computed embeddings for {len(results)} images. Running K-Means clustering...")
-    
+    print(
+        f"Computed embeddings for {len(results)} images. Running K-Means clustering..."
+    )
+
     if len(results) > 0:
         embeddings_matrix = np.array([r.embedding.flatten() for r in results])
-        
+
         # Normalize for cosine similarity behavior with Euclidean distance (KMeans)
-        norm_embeddings = normalize(embeddings_matrix, axis=1, norm='l2')
-        
+        norm_embeddings = normalize(embeddings_matrix, axis=1, norm="l2")
+
         num_clusters = app_config.active_learning.num_clusters
         # Handle edge case where we have fewer images than requested clusters
         effective_k = min(num_clusters, len(results))
-        
+
         kmeans = KMeans(n_clusters=effective_k, random_state=42)
         cluster_labels = kmeans.fit_predict(norm_embeddings)
     else:
@@ -71,7 +73,7 @@ def generate_embeddings():
 
         for i, res in enumerate(results):
             cid = cluster_labels[i] if i < len(cluster_labels) else -1
-            
+
             # Convert numpy array to string representation for CSV storage
             # We join with spaces or commas. Spaces is common for vector strings.
             emb_str = " ".join(map(str, res.embedding.flatten()))

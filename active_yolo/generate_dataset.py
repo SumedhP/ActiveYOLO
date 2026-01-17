@@ -7,6 +7,7 @@ from config import AppConfig, DataConfig
 from label import Label
 from tqdm import tqdm
 
+
 def _create_directory_structure(file_path: str) -> None:
     dirs = [
         "images",
@@ -43,7 +44,7 @@ def _copy_files(
         dest_image_path = os.path.join(dataset_path, "images", split, image_filename)
 
         shutil.copy2(label.file_path, dest_label_path)
-        
+
         # Image source is in the same directory structure as labels
         # (e.g., labels/imageset/*.txt -> images/imageset/*.jpg)
         source_image_path = os.path.join(source_images_path, image_filename)
@@ -89,7 +90,7 @@ def generate_dataset():
     print("Collecting labels from imageset...")
     train_labels = _collect_all_labels(app_config.imageset_labels_path)
     print(f"Found {len(train_labels)} labels in imageset.")
-    
+
     train_labels_with_data = [label for label in train_labels if not label.is_empty()]
     print(f"{len(train_labels_with_data)} imageset labels contain objects.")
 
@@ -97,20 +98,20 @@ def generate_dataset():
     print("Collecting labels from validation_set...")
     val_labels = _collect_all_labels(app_config.validation_labels_path)
     print(f"Found {len(val_labels)} labels in validation_set.")
-    
+
     val_labels_with_data = [label for label in val_labels if not label.is_empty()]
     print(f"{len(val_labels_with_data)} validation_set labels contain objects.")
 
     print(
-        f"Training has {len(train_labels_with_data)} labels and validation has {len(val_labels_with_data)} labels."
+        f"Training has {len(train_labels)} labels and validation has {len(val_labels)} labels."
     )
 
     # Copy files
     _copy_files(
-        train_labels_with_data, "train", app_config.dataset_path, app_config.imageset_images_path
+        train_labels, "train", app_config.dataset_path, app_config.imageset_images_path
     )
     _copy_files(
-        val_labels_with_data, "val", app_config.dataset_path, app_config.validation_images_path
+        val_labels, "val", app_config.dataset_path, app_config.validation_images_path
     )
 
     def get_class_distribution(labels: List[Label]) -> None:

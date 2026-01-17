@@ -20,7 +20,7 @@ class LabelingTool:
         label_filename = os.path.splitext(rel_path)[0] + ".txt"
         label_path = os.path.join(self.app_config.labels_path, label_filename)
         return label_path
-        
+
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("ActiveYOLO Labeling Tool")

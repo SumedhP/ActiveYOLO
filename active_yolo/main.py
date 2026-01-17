@@ -5,6 +5,8 @@ from embed import generate_embeddings
 from generate_dataset import generate_dataset
 from label_images import LabelingTool
 from train import train_backbone, train_model
+from qualitive_video import qualitive_video
+from config import AppConfig
 
 
 def run_gui():
@@ -41,6 +43,17 @@ def run_suggest():
     suggest_active_learning_images()
 
 
+def run_video(model_path: str):
+    """Generates qualitative video."""
+    print("Generating qualitative video...")
+    app_config = AppConfig.load_app_config()
+
+    qualitive_video(
+        model_path=model_path,
+        image_folder=app_config.validation_images_path,
+        output_path=app_config.output_path,
+    )
+
 def main():
     parser = argparse.ArgumentParser(description="ActiveYOLO Pipeline CLI")
     subparsers = parser.add_subparsers(
@@ -65,6 +78,12 @@ def main():
     # Subcommand: suggest
     subparsers.add_parser("suggest", help="Suggest next batch of images for labeling")
 
+    # Subcommand: video
+    video_parser = subparsers.add_parser("video", help="Generate qualitative video")
+    video_parser.add_argument(
+        "--model-path", type=str, required=True, help="Path to the trained model"
+    )
+
     args = parser.parse_args()
 
     if args.command == "label":
@@ -77,6 +96,8 @@ def main():
         run_embed()
     elif args.command == "suggest":
         run_suggest()
+    elif args.command == "video":
+        run_video(model_path=args.model_path)
 
 
 if __name__ == "__main__":

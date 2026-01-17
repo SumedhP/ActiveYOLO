@@ -26,7 +26,7 @@ def load_embeddings(csv_path: str) -> Tuple[List[str], List[int], np.ndarray]:
         for row in reader:
             if len(row) < 3:
                 raise ValueError(f"Invalid row in embeddings CSV: {row}")
-            
+
             paths.append(row[0])
             try:
                 cluster_ids.append(int(row[1]))
@@ -81,7 +81,7 @@ def suggest_active_learning_images():
 
     # 3. Clustering (Skipped: Using pre-computed clusters from CSV)
     print(f"Using pre-computed clusters for {len(embeddings)} images.")
-    
+
     # 4. Compute Coverage
     # cluster_id -> count of labeled images
     cluster_coverage = defaultdict(int)
@@ -93,7 +93,7 @@ def suggest_active_learning_images():
             cluster_coverage[cluster_id] += 1
         else:
             cluster_unlabeled_pool[cluster_id].append(idx)
-            
+
     # Determine the set of all clusters present in the data
     all_present_clusters = set(cluster_labels)
     # Ensure they are sorted for reproducible iteration if counts are equal

@@ -12,12 +12,13 @@ class ActiveLearningConfig:
     output_file_name: str
     embeddings_file_name: str
 
+
 @dataclass
 class InferenceConfig:
     confidence_threshold: float
     agnostic_nms: bool
     half: bool  # Use FP16 half precision
-    image_size: int # Higher values can result in better accuracy but slower inference
+    image_size: int  # Higher values can result in better accuracy but slower inference
 
 
 @dataclass
@@ -34,17 +35,17 @@ class AppConfig:
     def imageset_images_path(self) -> str:
         """Path to unlabeled imageset for active learning."""
         return os.path.join(self.images_path, "imageset")
-    
+
     @property
     def validation_images_path(self) -> str:
         """Path to validation set images."""
         return os.path.join(self.images_path, "validation")
-    
+
     @property
     def imageset_labels_path(self) -> str:
         """Path to imageset labels."""
         return os.path.join(self.labels_path, "imageset")
-    
+
     @property
     def validation_labels_path(self) -> str:
         """Path to validation set labels."""
