@@ -207,11 +207,10 @@ marimo/_lsp/
 __marimo__/
 
 # Project specific ignores
-*raw_images/*
+*images/*
+*labels/*
 *dataset/*
-*runs/*
 output/*
 models/*
-labels/*.txt
 *.zip
 *.pt
