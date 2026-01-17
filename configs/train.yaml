@@ -7,7 +7,7 @@ yolo:
   epochs: 300
   patience: 0
   batch: 64
-  device: [0, 1]
+  device: [0]
   optimizer: 'AdamW'
   lr: 0.001
 
