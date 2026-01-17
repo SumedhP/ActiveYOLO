@@ -1,18 +1,20 @@
 import argparse
 
+from active_learning.selection import suggest_active_learning_images
+from embed import generate_embeddings
+from generate_dataset import generate_dataset
+from label_images import LabelingTool
+from train import train_backbone, train_model
+
 
 def run_gui():
     """Launches the labeling GUI."""
-    from active_yolo.label_images import LabelingTool
-
     app = LabelingTool()
     app.run()
 
 
 def run_train(ssl=False):
     """Runs model training."""
-    from active_yolo.train import train_backbone, train_model
-
     if ssl:
         print("Starting Self-Supervised Backbone Training...")
         train_backbone()
@@ -23,24 +25,18 @@ def run_train(ssl=False):
 
 def run_dataset():
     """Generates the dataset."""
-    from active_yolo.generate_dataset import generate_dataset
-
     print("Generating dataset from labels...")
     generate_dataset()
 
 
 def run_embed():
     """Generates embeddings."""
-    from active_yolo.embed import generate_embeddings
-
     print("Generating embeddings...")
     generate_embeddings()
 
 
 def run_suggest():
     """Runs active learning suggestion."""
-    from active_yolo.active_learning.selection import suggest_active_learning_images
-
     print("Selecting images for next annotation batch...")
     suggest_active_learning_images()
 

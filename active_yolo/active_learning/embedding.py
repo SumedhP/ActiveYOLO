@@ -3,6 +3,7 @@ from typing import List
 
 import numpy as np
 from ultralytics import YOLO
+from tqdm import tqdm
 
 
 @dataclass
@@ -23,15 +24,9 @@ def compute_embeddings(
     embedding_model = YOLO(model_path)
     embeddings = []
 
-    results = embedding_model.embed(image_paths, verbose=True, stream=True)
-
-    for image_path, res in zip(image_paths, results):
-        embedding = res[0].cpu().numpy()
-        embeddings.append(
-            ImageEmbeddingResult(
-                image_path=image_path,
-                embedding=embedding,
-            )
-        )
+    for image_path in tqdm(image_paths, desc="Computing embeddings", unit="images"):
+        result = embedding_model.embed(image_path, verbose=False)
+        embedding = result[0].cpu().numpy()
+        embeddings.append(ImageEmbeddingResult(image_path, embedding))
 
     return embeddings

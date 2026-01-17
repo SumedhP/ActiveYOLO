@@ -6,8 +6,8 @@ import numpy as np
 from sklearn.cluster import KMeans
 from sklearn.preprocessing import normalize
 
-from active_yolo.active_learning.embedding import compute_embeddings
-from active_yolo.config.app_config import AppConfig
+from active_learning.embedding import compute_embeddings
+from config.app_config import AppConfig
 
 
 def generate_embeddings():

@@ -4,7 +4,7 @@ dataset_path: dataset/
 output_path: output/
 
 active_learning:
-  model: "models/best.pt"
+  model: "models/ssl.pt"
   images_per_iteration: 1000
   num_clusters: 50
   output_file_name: "active_learning_images.txt"
@@ -14,3 +14,4 @@ inference:
   confidence_threshold: 0.25
   agnostic_nms: True
   half: False
+  image_size: 960

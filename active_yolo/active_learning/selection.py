@@ -5,7 +5,7 @@ import numpy as np
 from typing import List, Tuple
 from collections import defaultdict
 
-from active_yolo.config.app_config import AppConfig
+from config.app_config import AppConfig
 
 
 def load_embeddings(csv_path: str) -> Tuple[List[str], List[int], np.ndarray]:

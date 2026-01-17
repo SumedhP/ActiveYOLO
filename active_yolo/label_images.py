@@ -771,6 +771,7 @@ class LabelingTool:
                 agnostic_nms=self.app_config.inference.agnostic_nms,
                 half=self.app_config.inference.half,
                 verbose=False,
+                imgsz=self.app_config.inference.image_size,
             )
 
             if results and results[0].boxes is not None:
