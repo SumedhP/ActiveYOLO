@@ -17,7 +17,7 @@ def train_model():
     # Load the YOLO model
     model = YOLO(yolo_config.model)
 
-    dataset_yaml_path = os.path.join(app_config.dataset_path, "dataset.yaml")
+    dataset_yaml_path = os.path.join(app_config.dataset_path, "data.yaml")
 
     model_dict = asdict(yolo_config)
     model_dict.pop("model", None)

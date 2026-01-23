@@ -1,5 +1,5 @@
 yolo:
-  model: models/ssl.pt
+  model: yolo26n.pt
   resume: False
   amp: False
   compile: True
