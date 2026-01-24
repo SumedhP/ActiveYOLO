@@ -14,7 +14,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     input_directory = args.zip
-    output_zip_file = input_directory + ".zip"
+    output_zip_file = "dataset.zip"
 
     files = []
     for root, _, filenames in os.walk(input_directory):

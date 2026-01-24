@@ -240,10 +240,14 @@ class LabelingTool:
         self.root.bind("<Key>", self._on_key_press)
         self.root.focus_set()
 
-        # Number keys for class selection
+        # Number keys for class selection (top row and numpad)
         for i in range(10):
             self.root.bind(
                 f"<Key-{i}>", lambda e, idx=i: self._set_class_by_number(idx)
+            )
+            # Numpad support
+            self.root.bind(
+                f"<KP_{i}>", lambda e, idx=i: self._set_class_by_number(idx)
             )
 
         # Navigation
@@ -753,6 +757,26 @@ class LabelingTool:
         box.class_id = class_id
         self._update_display()
 
+    def _calculate_iou(self, box1: BoundingBox, box2: BoundingBox) -> float:
+        """Calculate Intersection over Union (IoU) between two bounding boxes."""
+        # Calculate intersection area
+        x_left = max(box1.x1, box2.x1)
+        y_top = max(box1.y1, box2.y1)
+        x_right = min(box1.x2, box2.x2)
+        y_bottom = min(box1.y2, box2.y2)
+
+        if x_right < x_left or y_bottom < y_top:
+            return 0.0
+
+        intersection = (x_right - x_left) * (y_bottom - y_top)
+
+        # Calculate union area
+        box1_area = (box1.x2 - box1.x1) * (box1.y2 - box1.y1)
+        box2_area = (box2.x2 - box2.x1) * (box2.y2 - box2.y1)
+        union = box1_area + box2_area - intersection
+
+        return intersection / union if union > 0 else 0.0
+
     def _load_model_suggestions(self) -> None:
         if not self.current_image_path:
             return
@@ -776,12 +800,18 @@ class LabelingTool:
             )
 
             if results and results[0].boxes is not None:
-                # Remove existing suggestions
-                self.bounding_boxes = [
+                # Get ground truth boxes (non-suggested boxes)
+                ground_truth_boxes = [
                     b for b in self.bounding_boxes if not getattr(b, "suggested", False)
                 ]
 
+                # Remove existing suggestions
+                self.bounding_boxes = ground_truth_boxes.copy()
+
                 boxes = results[0].boxes
+                suggestions_added = 0
+                suggestions_filtered = 0
+
                 for i in range(len(boxes.xyxy)):
                     x1, y1, x2, y2 = boxes.xyxy[i].cpu().numpy()
                     cls = int(boxes.cls[i].cpu().numpy())
@@ -805,12 +835,23 @@ class LabelingTool:
                     suggested_box = BoundingBox(
                         int(x1), int(y1), int(x2), int(y2), cls, suggested=True
                     )
-                    # Manually set suggested attribute since it may not be in constructor
-                    suggested_box.suggested = True
-                    self.bounding_boxes.append(suggested_box)
+
+                    # Check IoU with all ground truth boxes
+                    max_iou = 0.0
+                    for gt_box in ground_truth_boxes:
+                        iou = self._calculate_iou(suggested_box, gt_box)
+                        max_iou = max(max_iou, iou)
+
+                    # Only add suggestion if IoU with all ground truth boxes is <= 0.5
+                    if max_iou <= 0.5:
+                        suggested_box.suggested = True
+                        self.bounding_boxes.append(suggested_box)
+                        suggestions_added += 1
+                    else:
+                        suggestions_filtered += 1
 
                 self._update_display()
-                print(f"Loaded {len(boxes.xyxy)} model suggestions")
+                print(f"Loaded {suggestions_added} model suggestions ({suggestions_filtered} filtered by IoU > 0.5)")
 
         except Exception as e:
             messagebox.showerror("Error", f"Failed to load model suggestions: {e}")
