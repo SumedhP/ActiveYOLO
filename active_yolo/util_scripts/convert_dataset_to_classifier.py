@@ -72,8 +72,10 @@ def process_split(
     class_names: dict,
 ) -> None:
     """Process train or val split and organize by class folders."""
-    labels_path = os.path.join(dataset_path, "labels", split)
-    images_path = os.path.join(dataset_path, "images", split)
+    labels_path = os.path.join(dataset_path, split, "labels")
+    images_path = os.path.join(dataset_path, split, "images")
+    print(f"Looking for labels in: {labels_path}")
+    print(f"Looking for images in: {images_path}")
 
     # Create split folder (Train or Val with capital letter)
     split_folder_name = split.capitalize()
