@@ -215,3 +215,4 @@ models/*
 runs/*
 *.zip
 *.pt
+whitepaper/*
