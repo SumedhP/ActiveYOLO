@@ -211,7 +211,6 @@ __marimo__/
 *labels/*
 *dataset*/*
 output/*
-models/*
 runs/*
 *.zip
-*.pt
+yolo*.pt
