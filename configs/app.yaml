@@ -1,19 +1,17 @@
-raw_images_path: raw_images/
+images_path: images/
 labels_path: labels/
 dataset_path: dataset/
 output_path: output/
 
-dataset:
-  val_split: 0.2
-  balance_classes: True
-
 active_learning:
-  model: "models/best.pt"
-  images_per_iteration: 1000
-  num_clusters: 50
-  output_file_name: "low_confidence_images.txt"
+  model: "runs/detect/models/train2/weights/best.pt"
+  images_per_iteration: 250
+  num_clusters: 1000
+  output_file_name: "mislabbeled_images.txt"
+  embeddings_file_name: "embeddings.csv"
 
 inference:
   confidence_threshold: 0.25
   agnostic_nms: True
   half: False
+  image_size: 960

@@ -1,21 +1,7 @@
 from dataclasses import dataclass
 from typing import List, Union
+
 import yaml
-
-
-@dataclass
-class AugmentationConfig:
-    hsv_h: float
-    hsv_s: float
-    hsv_v: float
-    degrees: float
-    flipud: float
-    fliplr: float
-    mosaic: float
-    scale: float
-    shear: float
-    perspective: float
-    translate: float
 
 
 @dataclass
@@ -33,11 +19,21 @@ class YOLOTrainConfig:
     optimizer: str
     lr: float
 
-    augmentation: AugmentationConfig
+    # Augmentation parameters
+    hsv_h: float
+    hsv_s: float
+    hsv_v: float
+    degrees: float
+    flipud: float
+    fliplr: float
+    mosaic: float
+    scale: float
+    shear: float
+    perspective: float
+    translate: float
 
     @staticmethod
     def load_from_dict(cfg: dict) -> "YOLOTrainConfig":
-        cfg["augmentation"] = AugmentationConfig(**cfg["augmentation"])
         return YOLOTrainConfig(**cfg)
 
 

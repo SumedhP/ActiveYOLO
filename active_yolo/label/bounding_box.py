@@ -1,4 +1,4 @@
-from label import Annotation
+from .label import Annotation
 
 
 class BoundingBox:

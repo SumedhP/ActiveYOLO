@@ -1,5 +1,6 @@
-from ultralytics import YOLO
 import argparse
+
+from ultralytics import YOLO
 
 
 def convert_to_percentage(value: str) -> float:
